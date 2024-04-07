@@ -7,4 +7,5 @@
 ![Control Ecu Design](https://github.com/M0hammedSaeed/Door-Locker-Security-System-Project/assets/114070625/619d0571-49c4-409d-ba45-eb7ff272ebc9)
 
 ## HMI_ECU Design
-![HMI  Ecu Design](https://github.com/M0hammedSaeed/Door-Locker-Security-System-Project/assets/114070625/c8d0e61e-c1cc-44db-8df6-a9ee0ae46b02)
+![HMI  Ecu Design](https://github.com/M0hammedSaeed/Door-Locker-Security-System-Project/assets/114070625/6fe90c48-17c3-452b-8e45-5017565ec80c)
+
