@@ -1,0 +1,99 @@
+/*******************************************************************************
+ * [   Module  ]: SPI Register Module
+ *
+ * [ File Name ]: spi_private.h
+ *
+ * [Description]: Header File for ATmega32 SPI Register.
+ *
+ * [   Author  ]: Mohamed Saeed
+ *
+ *******************************************************************************/
+
+#ifndef SRC_MCAL_SPI_SPI_PRIVATE_H_
+#define SRC_MCAL_SPI_SPI_PRIVATE_H_
+
+/*------------------------------------------------------------------------------
+ *                                 DEFINITIONS
+ *------------------------------------------------------------------------------*/
+
+/* SPI */
+
+/* Definition for SPCR (SPI Control Register) */
+#define SPCR_REG				(*(volatile uint8 *)0x2D)
+/* Definition for SPSR (SPI Status Register) */
+#define SPSR_REG    			(*(volatile uint8 *)0x2E)
+/* Definition for SPDR (SPI Data Register) */
+#define SPDR_REG    			(*(volatile uint8 *)0x2F)
+
+/* Bit numbers */
+
+/* SPCR */
+#define SPCR_SPIE    7
+#define SPCR_SPE     6
+#define SPCR_DORD    5
+#define SPCR_MSTR    4
+#define SPCR_CPOL    3
+#define SPCR_CPHA    2
+#define SPCR_SPR1    1
+#define SPCR_SPR0    0
+
+/* SPSR */
+#define SPSR_SPIF    7
+#define SPSR_WCOL    6
+#define SPSR_SPI2X   0
+
+/* Interrupt vectors */
+
+/* Serial Transfer Complete */
+#define SPI_STC_vect			_VECTOR(12)
+
+/* ISR attribute function */
+#define _VECTOR(N) 			__vector_ ## N
+#define ISR(vector) \
+	void vector (void) __attribute__ ((signal)); \
+	void vector (void)
+
+/*******************************************************************************
+ *                                    MASK's
+ *******************************************************************************/
+
+/* SPI Interrupt's */
+#define SPI_INT_DISABLE							0x7F
+#define SPI_INT_ENABLE							0x80
+
+/* Enable The SPI */
+#define SPI_DISABLE								0xBF
+#define SPI_ENABLE								0x40
+
+/* SPI Data Order */
+#define SPI_DATA_MSB							0xDF
+#define SPI_DATA_LSB							0x20
+
+/* Select Master or Slave SPI Mode */
+#define SPI_SLAVE								0xEF
+#define SPI_MASTER								0x10
+
+/* Select Clock Polarity of SPI */
+#define SPI_RISING_LEADING_FALLING_TRAILING		0xF7
+#define SPI_FALLING_LEADING_RISING_TRAILING		0x08
+
+/* Select Clock Phase of SPI */
+#define SPI_SAMPLE_LEADING_SETUP_TRAILING		0xFB
+#define SPI_SETUP_LEADING_SAMPLE_TRAILING		0x04
+
+/* Clock Rate Select of SPI */
+#define SPI_FCPU_BY_clr							0xFC
+#define SPI_FCPU_BY_4							0x00
+#define SPI_FCPU_BY_16							0x01
+#define SPI_FCPU_BY_64							0x02
+#define SPI_FCPU_BY_128							0x03
+#define SPI_DS_FCPU_BY_2						0x00
+#define SPI_DS_FCPU_BY_8						0x01
+#define SPI_DS_FCPU_BY_32						0x02
+#define SPI_DS_FCPU_BY_64						0x03
+
+/*  Double SPI Speed  */
+#define SPI_DOUBLE_SPEED_clr					0xFE
+#define SPI_DOUBLE_SPEED						0x01
+
+#endif /* SRC_MCAL_SPI_SPI_PRIVATE_H_ */

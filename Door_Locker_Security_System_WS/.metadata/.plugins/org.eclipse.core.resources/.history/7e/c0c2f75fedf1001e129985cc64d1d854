@@ -1,0 +1,165 @@
+/*******************************************************************************
+ *
+ *  [   Module  ]: SPI Modules
+ *
+ *  [ File Name ]: spi.h
+ *
+ *  [Description]: Header File for SPI Module
+ *
+ *  [   Author  ]: Mohamed Saeed
+ *
+ *******************************************************************************/
+
+#ifndef SRC_MCAL_SPI_SPI_H_
+#define SRC_MCAL_SPI_SPI_H_
+
+/*******************************************************************************
+ *                                  INCLUDES
+ *******************************************************************************/
+
+#include "../../utils/std_types.h"
+
+/*******************************************************************************
+ *                      Definitions and Configuration
+ *******************************************************************************/
+
+#define SPI_PORT_ID						PORTB_ID
+
+#define SPI_SS_PIN_ID       			PIN4_ID
+#define SPI_MOSI_PIN_ID					PIN5_ID
+#define SPI_MISO_PIN_ID					PIN6_ID
+#define SPI_SCK_PIN_ID					PIN7_ID
+
+/* Enable The SPI */
+#define SPI_CONTROL						ENABLE
+
+/*
+ * [Description]: To Configure Interrupt in SPI just Write Enable or Disable.
+ *
+ * [Example]: #define SPI_INT_EN      ENABLE
+ *
+ * [SPI Interrupt's]:
+ * 			--> [DISABLE]
+ * 			--> [ENABLE]
+ */
+#define SPI_INT_EN						DISABLE
+
+/*
+ * [Description]: To configure SPI Data Order just copy Mask of  required Data Order
+ * 				  and paste in Data Order selector.
+ *
+ * [Example]: #define SPI_DataOrder_SELECTOR		SPI_DATA_LSB
+ *            like this you configure the LSB of the data word is transmitted first.
+ *
+ * [SELECT Data Order]:
+ * 			--> [SPI_DATA_MSB]
+ * 			--> [SPI_DATA_LSB]
+ */
+#define SPI_DataOrder_SELECTOR			SPI_DATA_LSB
+
+/*
+ * [Description]: To configure Select Master or Slave SPI Mode just copy Mask of Mode and paste in Mode selector.
+ *
+ * [Example]: #define SPI_MASTER_SLAVE_SELECTOR		SPI_MASTER
+ *            like this you configure SPI to work with Master mode.
+ *
+ * [SELECT SPI Mode's]:
+ * 			--> [SPI_SLAVE]
+ * 			--> [SPI_MASTER]
+ */
+#define SPI_MASTER_SLAVE_SELECTOR		SPI_MASTER
+
+/*
+ * [Description]: To configure Select Clock Polarity of SPI just copy Mask of select and paste in selector.
+ *
+ * [Example]: #define SPI_CLOCK_POLARITY_SELECTOR		SPI_RISING_LEADING_FALLING_TRAILING
+ *            like this you configure Serial Clock is low when idle.
+ *
+ * [SELECT SPI Clock Polarity]:
+ * 			--> [SPI_RISING_LEADING_FALLING_TRAILING]
+ * 			--> [SPI_FALLING_LEADING_RISING_TRAILING]
+ */
+#define SPI_CLOCK_POLARITY_SELECTOR		SPI_RISING_LEADING_FALLING_TRAILING
+
+/*
+ * [Description]: To configure Select Clock Phase of SPI just copy Mask of select and paste in selector.
+ *
+ * [Example]: #define SPI_CLOCK_PHASE_SELECTOR		SPI_SETUP_LEADING_SAMPLE_TRAILING
+ *            like this you configure data is sampled on trailing (last) and setup on the leading (first) edge of SCK.
+ *
+ * [SELECT SPI Clock Phase]:
+ * 			--> [SPI_SAMPLE_LEADING_SETUP_TRAILING]
+ * 			--> [SPI_SETUP_LEADING_SAMPLE_TRAILING]
+ */
+#define SPI_CLOCK_PHASE_SELECTOR		SPI_SETUP_LEADING_SAMPLE_TRAILING
+
+/*
+ * [Description]: To configure Clock Rate Select of SPI just copy Mask of required Rate and paste it at Rate selector.
+ *
+ * [Example]: #define SPI_CLOCK_RATE_SELECTOR			SPI_FCPU_BY_4
+ *            like this you configure Clock Rate is divide the Fcpu by 4.
+ *
+ * [SELECT SPI Clock Rate]:
+ * 			--> [SPI_FCPU_BY_4]
+ * 			--> [SPI_FCPU_BY_16]
+ * 			--> [SPI_FCPU_BY_64]
+ * 			--> [SPI_FCPU_BY_128]
+ * 			--> [SPI_DS_FCPU_BY_2]
+ * 			--> [SPI_DS_FCPU_BY_8]
+ * 			--> [SPI_DS_FCPU_BY_32]
+ * 			--> [SPI_DS_FCPU_BY_64]
+ */
+#define SPI_CLOCK_RATE_SELECTOR			SPI_FCPU_BY_4
+
+/*
+ * Default SPI data value used in case we need to receive a byte from the other device,
+ * without need to send a data to it
+ */
+#define SPI_DEFAULT_DATA_VALUE 			0xFF
+
+/*******************************************************************************
+ *                     		 Functions Prototypes                                   *
+ *******************************************************************************/
+
+/*
+ * [Function Name]: SPI_Init
+ * [Description]  : Functional responsible for Initialize the SPI device.
+ * [Args]  : Void
+ * [Return]: Void
+ */
+void SPI_Init(void);
+
+/*
+* [Function Name]: SPI_sendReceiveByte
+* [Description]  : Send the required data through SPI to the other SPI device.
+* 					In the same time data will be received from the other device.
+* [Args]  : uint8
+* [Return]: uint8
+*/
+uint8 SPI_sendReceiveByte(uint8 data);
+
+/*
+* [Function Name]: SPI_sendString
+* [Description]  : Send the required string through SPI to the other SPI device.
+* [Args]  : pointer to constant uint8
+* [Return]: void
+*/
+void SPI_sendString(const uint8 *str);
+
+/*
+* [Function Name]: SPI_receiveString
+* [Description]  : Receive the required string until the '#' symbol through SPI from the other SPI device.
+* [Args]  : pointer to uint8
+* [Return]: void
+*/
+void SPI_receiveString(uint8 *str);
+
+/*
+* [Function Name]: SPI_SetCallBack
+* [Description]  : This function's is responsible to set the Call Back function address.
+* [Args]  : Pointer To Function take void and return void
+* [Return]: Void
+*/
+void SPI_SetCallBack(void (*Ptr_To_fun)(void));
+
+#endif /* SRC_MCAL_SPI_SPI_H_ */

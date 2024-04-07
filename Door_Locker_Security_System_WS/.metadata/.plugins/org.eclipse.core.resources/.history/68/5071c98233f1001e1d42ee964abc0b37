@@ -1,0 +1,187 @@
+/*******************************************************************************
+*
+*  [   Module  ]: TWI Modules
+*
+*  [ File Name ]: twi.h
+*
+*  [Description]: Header File for TWI Module
+*
+*  [   Author  ]: Mohamed Saeed
+*
+*******************************************************************************/
+
+#ifndef SRC_MCAL_TWI_I2C_H_
+#define SRC_MCAL_TWI_I2C_H_
+
+/*******************************************************************************
+*                                  INCLUDES
+*******************************************************************************/
+
+#include "../../utils/std_types.h"
+#include <math.h>
+
+/*******************************************************************************
+*                      Definitions and Configuration
+*******************************************************************************/
+
+/* Returns */
+typedef enum
+{
+	EVENT_OK,
+	START_NOT_SENT,
+	REPEATED_START_NOT_SENT,
+	SLA_W_ACK_SENT,
+	SLA_W_NACK_SENT,
+	SLA_R_ACK_SENT,
+	SLA_R_NACK_SENT,
+	SLA_RW_FAILED,
+	DATA_WRITE_ACK_SENT,
+	DATA_WRITE_NACK_SENT,
+	DATA_WRITE_FAILED,
+	DATA_READ_ACK_SENT,
+	DATA_READ_NACK_SENT,
+	DATA_READ_FAILED,
+	DATA_RW_FAILED
+}TWI_Retuens_t;
+
+typedef enum
+{
+	TWI_WRITE_MODE,
+	TWI_READ_MODE
+}TWI_Mode_t;
+
+typedef enum
+{
+	ACK,
+	NACK
+}TWI_ACK_t;
+
+/* I2C Status Bits in the TWSR Register */
+#define TWI_START_STATE                     0x08 /* start has been sent */
+#define TWI_REPEATED_START_STATE            0x10 /* repeated start */
+#define TWI_MT_SLA_W_ACK_STATE              0x18 /* Master transmit ( slave address + Write request ) to slave + ACK received from slave. */
+#define TWI_MT_SLA_W_NACK_STATE             0x20 /* Master transmit ( slave address + Write request ) to slave  but doesn't send ACK to slave. */
+#define TWI_MT_SLA_R_ACK_STATE              0x40 /* Master transmit ( slave address + Read request ) to slave + ACK received from slave. */
+#define TWI_MT_SLA_R_NACK_STATE             0x48 /* Master transmit ( slave address + Read request ) to slave  but doesn't send ACK to slave. */
+#define TWI_MT_DATA_W_ACK_STATE             0x28 /* Master transmit data and ACK has been received from slave. */
+#define TWI_MT_DATA_W_NACK_STATE            0x30 /* Master transmit data and NACK has been received from slave. */
+#define TWI_MR_DATA_R_ACK_STATE             0x50 /* Master received data and send ACK to slave. */
+#define TWI_MR_DATA_R_NACK_STATE            0x58 /* Master received data  but doesn't send ACK to slave. */
+
+#define TWI_MY_ADDRESS						0x02  /* my address = 0x01 */
+
+/*
+ * [Description]: To configure Rate of Data Transfer Mode of TWI just copy Mask of required Rate and paste it at Rate Mode.
+ *
+ * [Example]: #define TWI_SCLK_SELECTOR					TWI_DT_NORMAL_MODE
+ *            like this you configure Rate of Data Transfer is Normal Mode 100Kb/s.
+ *
+ * [SELECT SCLK Mode]:
+ * 			--> [TWI_DT_NORMAL_MODE]
+ * 			--> [TWI_DT_FAST_MODE]
+ */
+#define TWI_SCLK_MODE						TWI_DT_FAST_MODE
+
+/*
+ * Bit Rate Generator:
+ * The equation generated the SCL frequency
+ */
+#define BITRATE								((F_CPU/TWI_SCLK_MODE) - 16)/(2 * pow(4,TWI_PRESCALER_SELECTOR))
+
+/*
+ * [Description]: To configure Prescaler Select of TWI just copy Mask of required Prescaler and paste it at Prescaler selector.
+ *
+ * [Example]: #define TWI_PRESCALER_SELECTOR			TWI_PRESCALER_1
+ *            like this you configure Prescaler is divide the Fcpu by 1.
+ *
+ * [SELECT TWI Prescaler]:
+ * 			--> [TWI_PRESCALER_1]
+ * 			--> [TWI_PRESCALER_4]
+ * 			--> [TWI_PRESCALER_16]
+ * 			--> [TWI_PRESCALER_64]
+ */
+#define TWI_PRESCALER_SELECTOR				TWI_PRESCALER_1
+
+/*
+ * [Description]: To Configure Interrupt in TWI just Write Enable or Disable.
+ *
+ * [Example]: #define TWI_INT_EN      ENABLE
+ *
+ * [TWI Interrupt's]:
+ * 			--> [DISABLE]
+ * 			--> [ENABLE]
+ */
+#define TWI_INT_EN							DISABLE
+
+/*******************************************************************************
+ *                     		 Functions Prototypes                                   *
+ *******************************************************************************/
+
+/*
+ * [Function Name]: TWI_init
+ * [Description]  : Functional responsible for Initialize the TWI device.
+ * [Args]  : Void
+ * [Return]: Void
+ */
+void TWI_init(void);
+
+/*
+ * [Function Name]: TWI_start
+ * [Description]  : Functional responsible for Send Start Condition to the Slave.
+ * [Args]  : Void
+ * [Return]: Enum
+ */
+TWI_Retuens_t TWI_start(void);
+
+/*
+ * [Function Name]: TWI_repeatedStart
+ * [Description]  : Functional responsible for Send repeated Start Condition to the Slave.
+ * [Args]  : Void
+ * [Return]: Enum
+ */
+TWI_Retuens_t TWI_repeatedStart(void);
+
+/*
+ * [Function Name]: TWI_addressSelect
+ * [Description]  : Functional responsible for the address with write or read bit to the Slave.
+ * [Args]  : 1- uint8 to take the address
+ * 			 2- Enum to select write or read Mode
+ * [Return]: Enum
+ */
+TWI_Retuens_t TWI_addressSelect(uint8 address, TWI_Mode_t rw);
+
+/*
+ * [Function Name]: TWI_dataEvent
+ * [Description]  : Functional responsible for Send and receive with ACK or NACK Data.
+ * [Args]  : 1- pointer to uint8 to send or receive the data
+ * 			 2- Enum to select write or read Mode
+ * 			 3- Enum to select after transmit or receive the data send ACK or NACK
+ * [Return]: Enum
+ */
+TWI_Retuens_t TWI_dataEvent(uint8 *data, TWI_Mode_t rw, TWI_ACK_t ack);
+
+/*
+ * [Function Name]: TWI_stop
+ * [Description]  : Functional responsible for Send Stop Condition to the Slave.
+ * [Args]  : Void
+ * [Return]: Void
+ */
+void TWI_stop(void);
+
+/*
+ * [Function Name]: TWI_getStatus
+ * [Description]  : Functional responsible for Get the STatus of the TWI logic and the Two-wire Serial Bus.
+ * [Args]  : void
+ * [Return]: uint8
+ */
+uint8 TWI_getStatus(void);
+
+/*
+* [Function Name]: TWI_SetCallBack
+* [Description]  : This function's is responsible to set the Call Back function address.
+* [Args]  : Pointer To Function take void and return void
+* [Return]: Void
+*/
+void TWI_SetCallBack(void (*Ptr_To_fun)(void));
+
+#endif /* SRC_MCAL_TWI_I2C_H_ */

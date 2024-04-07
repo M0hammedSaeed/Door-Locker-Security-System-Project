@@ -1,0 +1,45 @@
+/*******************************************************************************
+ * [Module Name]: app.h
+ *
+ * [Description]: Header file that contain Functions Prototypes for Applications
+ * 				  Human Machine Interface (HMI_ECU).
+ *
+ * [Author]: Mohamed Saeed
+ *******************************************************************************/
+
+#ifndef SRC_APP_APP_H_
+#define SRC_APP_APP_H_
+
+/*******************************************************************************
+ *                                  INCLUDES
+ *******************************************************************************/
+
+#include "../utils/std_types.h"
+
+/*******************************************************************************
+ *                      			Definitions
+ *******************************************************************************/
+
+
+/*******************************************************************************
+ *                     		 	Functions Prototypes                           *
+ *******************************************************************************/
+
+/*
+ * [Function Name]: APP_init
+ * [Description]  : This function is responsible for initialize the application.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_init(void);
+
+/*
+ * [Function Name]: APP_start
+ * [Description]  : This function is responsible for Starting the application.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_start(void);
+
+
+#endif /* SRC_APP_APP_H_ */

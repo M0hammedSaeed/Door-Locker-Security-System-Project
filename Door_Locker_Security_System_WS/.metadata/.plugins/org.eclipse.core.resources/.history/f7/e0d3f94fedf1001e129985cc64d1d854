@@ -1,0 +1,64 @@
+/*******************************************************************************
+ * [ File Name ]: button.h
+ *
+ * [Description]: Header File that contain functions prototypes for Button.
+ *
+ * [   Author  ]: Mohamed Saeed
+ *
+ *******************************************************************************/
+
+#ifndef SRC_EHAL_BUTTON_BUTTON_H_
+#define SRC_EHAL_BUTTON_BUTTON_H_
+
+/*------------------------------------------------------------------------------
+ *                                  Includes
+ -------------------------------------------------------------------------------*/
+#include "../../utils/std_types.h"
+#include "../../MCAL/GPIO/gpio.h"
+
+/*------------------------------------------------------------------------------
+ *                              Definitions
+ -------------------------------------------------------------------------------*/
+
+#define INT_PULL_UP			0
+#define EXT_PULL_UP     	1
+#define EXT_PULL_DOWN 	  	2
+
+typedef enum
+{
+	BUTTON1_ID,
+	BUTTON2_ID,
+	BUTTON3_ID
+}EN_Button_Type_t;
+
+typedef enum
+{
+	unpressed,
+	pressed
+
+}EN_Button_State_t;
+
+/*------------------------------------------------------------------------------
+ *                              Configuration
+ -------------------------------------------------------------------------------*/
+
+#define BUTTON1_PORT	PORTA_ID
+#define BUTTON1_PIN		PIN0_ID
+#define	BUTTON1_PULL	EXT_PULL_DOWN
+
+#define BUTTON2_PORT	PORTA_ID
+#define BUTTON2_PIN		PIN1_ID
+#define	BUTTON2_PULL	EXT_PULL_DOWN
+
+#define BUTTON3_PORT	PORTA_ID
+#define BUTTON3_PIN		PIN2_ID
+#define	BUTTON3_PULL	EXT_PULL_DOWN
+
+/*------------------------------------------------------------------------------
+ *                             Function Prototype
+ -------------------------------------------------------------------------------*/
+
+void BUTTON_Init(EN_Button_Type_t Button_ID);
+EN_Button_State_t BUTTON_IsPressed(EN_Button_Type_t Button_ID);
+
+#endif /* SRC_EHAL_BUTTON_BUTTON_H_ */

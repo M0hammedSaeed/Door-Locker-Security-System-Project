@@ -1,0 +1,36 @@
+/*******************************************************************************
+ * [   Module  ]: Watchdog Timer Register
+ *
+ * [ File Name ]: wdt_private.h
+ *
+ * [Description]: Header File for ATmega32 Watchdog Timer Register.
+ *
+ * [   Author  ]: Mohamed Saeed
+ *
+ *******************************************************************************/
+
+#ifndef SRC_MCAL_WDT_WDT_PRIVATE_H_
+#define SRC_MCAL_WDT_WDT_PRIVATE_H_
+
+/*------------------------------------------------------------------------------
+ *                                  INCLUDES
+ *------------------------------------------------------------------------------*/
+
+#include "../../utils/std_types.h"
+
+/*------------------------------------------------------------------------------
+ *                                 DEFINITIONS
+ *------------------------------------------------------------------------------*/
+
+/* Definition for WDTCR ( Watchdog Timer Control Register) */
+#define WDTCR_REG     *((volatile uint8 *) 0x41)
+
+/* Bit numbers */
+
+/* WDTCR */
+#define WDTCR_WDTOE   4
+#define WDTCR_WDE     3
+#define WDTCR_WDP2    2
+#define WDTCR_WDP1    1
+#define WDTCR_WDP0    0
+#endif /* SRC_MCAL_WDT_WDT_PRIVATE_H_ */

@@ -1,0 +1,152 @@
+/*******************************************************************************
+ * [ File Name ]: button.c
+ *
+ * [Description]: Source File that contain implementation functions for Button.
+ *
+ * [   Author  ]: Mohamed Saeed
+ *
+ *******************************************************************************/
+
+/*------------------------------------------------------------------------------
+ *                                  Includes
+ -------------------------------------------------------------------------------*/
+#include "button.h"
+
+/*------------------------------------------------------------------------------
+ *                               FUNCTIONS IMPLEMENTATION
+ *------------------------------------------------------------------------------*/
+
+void BUTTON_Init(EN_Button_Type_t Button_ID)
+{
+	switch(Button_ID)
+	{
+	case BUTTON1_ID:
+		GPIO_SetPinDir(BUTTON1_PORT, BUTTON1_PIN, pin_input);
+#if(BUTTON1_PULL == EXT_PULL_DOWN)
+		GPIO_WritePin(BUTTON1_PORT, BUTTON1_PIN, logic_low);
+#elif(BUTTON1_PULL == EXT_PULL_UP)
+		GPIO_WritePin(BUTTON1_PORT, BUTTON1_PIN, logic_high);
+#elif(BUTTON1_PULL == INT_PULL_UP)
+		GPIO_WritePin(BUTTON1_PORT, BUTTON1_PIN, logic_high);
+#endif
+		break;
+	case BUTTON2_ID:
+		GPIO_SetPinDir(BUTTON2_PORT, BUTTON2_PIN, pin_input);
+#if(BUTTON2_PULL == EXT_PULL_DOWN)
+		GPIO_WritePin(BUTTON2_PORT, BUTTON2_PIN, logic_low);
+#elif(BUTTON2_PULL == EXT_PULL_UP)
+		GPIO_WritePin(BUTTON2_PORT, BUTTON2_PIN, logic_high);
+#elif(BUTTON1_PULL == INT_PULL_UP)
+		GPIO_WritePin(BUTTON2_PORT, BUTTON2_PIN, logic_high);
+#endif
+		break;
+	case BUTTON3_ID:
+		GPIO_SetPinDir(BUTTON3_PORT, BUTTON3_PIN, pin_input);
+#if(BUTTON3_PULL == EXT_PULL_DOWN)
+		GPIO_WritePin(BUTTON3_PORT, BUTTON3_PIN, logic_low);
+#elif(BUTTON3_PULL == EXT_PULL_UP)
+		GPIO_WritePin(BUTTON3_PORT, BUTTON3_PIN, logic_high);
+#elif(BUTTON3_PULL == INT_PULL_UP)
+		GPIO_WritePin(BUTTON3_PORT, BUTTON3_PIN, logic_high);
+#endif
+		break;
+	}
+}
+EN_Button_State_t BUTTON_IsPressed(EN_Button_Type_t Button_ID)
+{
+	uint8 status = unpressed;
+	switch(Button_ID)
+	{
+	case BUTTON1_ID:
+#if(BUTTON1_PULL == EXT_PULL_DOWN)
+		if(GPIO_ReadPin(BUTTON1_PORT, BUTTON1_PIN))
+		{
+			status = pressed;
+		}
+		else
+		{
+			status = unpressed;
+		}
+#elif(BUTTON1_PULL == EXT_PULL_UP)
+		if(GPIO_ReadPin(BUTTON1_PORT, BUTTON1_PIN))
+		{
+			status = unpressed;
+		}
+		else
+		{
+			status = pressed;
+		}
+#elif(BUTTON1_PULL == INT_PULL_UP)
+		if(GPIO_ReadPin(BUTTON1_PORT, BUTTON1_PIN))
+		{
+			status = unpressed;
+		}
+		else
+		{
+			status = pressed;
+		}
+#endif
+		break;
+	case BUTTON2_ID:
+#if(BUTTON2_PULL == EXT_PULL_DOWN)
+		if(GPIO_ReadPin(BUTTON2_PORT, BUTTON2_PIN))
+		{
+			status = pressed;
+		}
+		else
+		{
+			status = unpressed;
+		}
+#elif(BUTTON2_PULL == EXT_PULL_UP)
+		if(GPIO_ReadPin(BUTTON2_PORT, BUTTON2_PIN))
+		{
+			status = unpressed;
+		}
+		else
+		{
+			status = pressed;
+		}
+#elif(BUTTON2_PULL == INT_PULL_UP)
+		if(GPIO_ReadPin(BUTTON2_PORT, BUTTON2_PIN))
+		{
+			status = unpressed;
+		}
+		else
+		{
+			status = pressed;
+		}
+#endif
+		break;
+	case BUTTON3_ID:
+#if(BUTTON3_PULL == EXT_PULL_DOWN)
+		if(GPIO_ReadPin(BUTTON3_PORT, BUTTON3_PIN))
+		{
+			status = pressed;
+		}
+		else
+		{
+			status = unpressed;
+		}
+#elif(BUTTON3_PULL == EXT_PULL_UP)
+		if(GPIO_ReadPin(BUTTON3_PORT, BUTTON3_PIN))
+		{
+			status = unpressed;
+		}
+		else
+		{
+			status = pressed;
+		}
+#elif(BUTTON3_PULL == INT_PULL_UP)
+		if(GPIO_ReadPin(BUTTON3_PORT, BUTTON3_PIN))
+		{
+			status = unpressed;
+		}
+		else
+		{
+			status = pressed;
+		}
+#endif
+		break;
+	}
+	return status;
+}

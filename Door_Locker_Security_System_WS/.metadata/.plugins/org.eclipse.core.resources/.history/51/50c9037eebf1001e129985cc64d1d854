@@ -1,0 +1,416 @@
+/*******************************************************************************
+ * [Module Name]: app.c
+ *
+ * [Description]: Source file that contain Implementation Functions for Applications.
+ *
+ * [Author]: Mohamed Saeed
+ *******************************************************************************/
+
+/*******************************************************************************
+ *                                  Includes
+ *******************************************************************************/
+
+#include "app.h"
+#include "../MCAL/TIMER/timer.h"
+#include "../MCAL/UART/uart.h"
+#include "../MCAL/G_INTERRUPT/g_interrupt.h"
+#include "../EHAL/BUZZER/buzzer.h"
+#include "../EHAL/DC_MOTOR/dc_motor.h"
+#include "../EHAL/EXTERNAL_EEPROM/external_eeprom.h"
+
+/*******************************************************************************
+ *                               Global Variable
+ *******************************************************************************/
+
+/* the seconds counter */
+uint8 seconds_tick = 0;
+/* to know how many times the user entered wrong password */
+uint8 WrongPasswordCounts = 0;
+
+/*******************************************************************************
+ *                      		Functions Definitions
+ *******************************************************************************/
+
+/*
+ * [Function Name]: APP_init
+ * [Description]  : This function is responsible for initialize the application.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_init(void)
+{
+	/* Initialize the USART driver */
+	USART_Init();
+	/* Initialize the EEPROM driver*/
+	EEPROM_init();
+	/* Initialize the Buzzer driver*/
+	Buzzer_init();
+	/* Initialize the DC Motor driver*/
+	DcMotor_Init();
+	/* setting the callback function */
+	TIMER0_SetCallBack(APP_handleTimer);
+	/* Enable Global Interrupt */
+	GI_Enable();
+}
+
+/*
+ * [Function Name]: APP_start
+ * [Description]  : This function is responsible for Starting the application.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_start(void)
+{
+	/* to hold the First Password taken from the user */
+	uint8 f_pass[PASSWORD_LENGTH];
+
+	/* to hold the Second Password taken from the user */
+	uint8 s_pass[PASSWORD_LENGTH];
+
+	/*to hold the Selected Option from HMI_ECU*/
+	uint8 selectOption;
+}
+/*
+ * [Function Name]: APP_receivePasseord
+ * [Description]  : This function is responsible for receive the password byte by
+ * 					byte from HMI_ECU and save it into buffer.
+ * [Args]  : pointer to uint8
+ * [Return]: Void
+ */
+void APP_receivePassword(uint8 *pass)
+{
+	/* Wait until HMI_ECU reply that it is ready to start communication */
+	while(USART_recieveByte() != HMI_ECU_READY);
+
+	/* Send dummy byte to tell HMI_ECU that Control_ECU is ready */
+	USART_sendByte(CONTROL_ECU_READY);
+
+	/* Save the password which is received by UART byte by byte */
+	for(uint8 i=0; i<PASSWORD_LENGTH; i++)
+	{
+		pass[i] = USART_recieveByte();
+	}
+}
+
+/*
+ * [Function Name]: APP_matchPassword
+ * [Description]  : This function is responsible for check if the two entered password are matched or not.
+ * [Args]  : 1- pointer to constant uint8
+ *           2- pointer to constant uint8
+ * [Return]: boolean
+ */
+boolean APP_matchPassword(const uint8 *f_pass, const uint8 *s_pass)
+{
+	for(uint8 i=0; i<PASSWORD_LENGTH; i++)
+	{
+		if(f_pass[i] == s_pass[i])
+			continue;
+		else
+			return FALSE;
+	}
+	return TRUE;
+}
+
+/*
+ * [Function Name]: APP_savePasswordInEEPROM
+ * [Description]  : This function is responsible for saves the correct password in External EEPROM.
+ * [Args]  :  pointer to constant uint8
+ * [Return]: void
+ */
+void APP_savePasswordInEEPROM(const uint8* pass)
+{
+	for(uint8 i=0; i<PASSWORD_LENGTH; i++)
+	{
+		/* Write Every digit of password in the external EEPROM */
+		EEPROM_writeByte(PASSWORD_LOCATION+i, pass[i]);
+	}
+}
+
+/*
+ * [Function Name]: APP_adjustPasswordFirstTime
+ * [Description]  : This function is responsible for Saves the correct password in External EEPROM if
+ * 					the Entered Passwords Are Matched.
+ * [Args]  : 1- pointer to uint8
+ * 			 2- pointer to uint8
+ * [Return]: uint8
+ */
+uint8 APP_adjustPasswordFirstTime(uint8 *f_pass, uint8 *s_pass)
+{
+	/* Receive the first password from HMI_ECU */
+	APP_receivePassword(f_pass);
+
+	/* Receive the Second password from HMI_ECU */
+	APP_receivePassword(s_pass);
+
+	/* Save the password in External EEPROM if the two Passwords are matched */
+	if(APP_matchPassword(f_pass, s_pass))
+	{
+		APP_savePasswordInEEPROM(f_pass);
+		return SUCCESS;
+	}
+	else
+	{
+		return ERROR;
+	}
+}
+
+/*
+ * [Function Name]: APP_timer
+ * [Description]  : This function is responsible for tells the timer to start counting and give it how many Second you want.
+ * [Args]  : uint8
+ * [Return]: void
+ */
+void APP_timer(uint8 delay)
+{
+	/* Initialize the timer */
+	TIMER_Init();
+
+	/* waiting until the seconds count reaches the specified no. of seconds */
+	while(seconds_tick < delay);
+
+	/* Stop The Timer1 */
+	TIMER_DeInit(1);
+
+	/* reset number of ticks */
+	seconds_tick = 0;
+}
+
+/*
+ * [Function Name]: APP_getOptionFromHMI_ECU
+ * [Description]  : This function is responsible for get the option from user (Open door - Change Password).
+ * [Args]  : void
+ * [Return]: uint8
+ */
+uint8 APP_getOptionFromHMI_ECU(void)
+{
+	/* Wait until HMI_ECU reply that it is ready to start communication */
+	while(USART_recieveByte() != HMI_ECU_READY);
+
+	/* Send dummy byte to tell HMI_ECU that Control_ECU is ready */
+	USART_sendByte(CONTROL_ECU_READY);
+
+	return USART_recieveByte();
+}
+
+/*
+ * [Function Name]: APP_sendStatusToHMI_ECU
+ * [Description]  : This function is responsible for send status to HMI ECU (DOOR_IS_OPENING - DOOR_IS_CLOSING - DOOR_IS_CLOSED).
+ * [Args]  : uint8
+ * [Return]: void
+ */
+void APP_sendStatusToHMI_ECU(uint8 state)
+{
+	/* Send dummy byte to tell HMI_ECU that Control_ECU is ready to start communication */
+	USART_sendByte(CONTROL_ECU_READY);
+
+	/* Wait until HMI ECU reply that it is ready to receive  */
+	while(USART_recieveByte() != HMI_ECU_READY);
+
+	USART_sendByte(state);
+}
+
+/*
+ * [Function Name]: APP_readPasswordFromEEPROM
+ * [Description]  : This function is responsible for read the saved password from External EERROM.
+ * [Args]  : pointer to uint8
+ * [Return]: void
+ */
+void APP_readPasswordFromEEPROM(uint8 *pass)
+{
+	for(uint8 i=0; i<PASSWORD_LENGTH; i++)
+	{
+		EEPROM_readByte(PASSWORD_LOCATION+i, pass+i);
+	}
+}
+
+/*
+ * [Function Name]: APP_readPasswordFromEEPROM
+ * [Description]  : This function is responsible for handle open the door request ,
+ * 					It takes Password From HMI_ECU Then:
+ * 					Compares this password with the one saved in EEPROM , if the two passwords matches:
+ * 					it will open the door for 15 seconds and send the status for HMI_ECU (Door is Opening) to display it on LCD.
+ * 					if the user entered wrong password for three times:
+ * 					the control_ECU will Turn on buzzer alarm for 1 minute, send the status for HMI_ECU (Error) ,
+ * 					then control_ECU informs the HMI_ECU to continue the program After 1 minute.
+ * [Args]  : 1- pointer to uint8
+ * 			 2- pointer to uint8
+ * [Return]: void
+ */
+void APP_handleOpenDoorOption(uint8 *pass, uint8 *EEPROM_pass)
+{
+	while(1)
+	{
+		/* receive the password from the HMI_ECU */
+		APP_receivePassword(pass);
+
+		/* get the password saved in EEPROM */
+		APP_readPasswordFromEEPROM(EEPROM_pass);
+
+		/* check the two password */
+		if(APP_matchPassword(pass, EEPROM_pass) == TRUE)
+		{
+			/* if they match open the door and send the status to inform the HMI_ECU */
+			APP_sendStatusToHMI_ECU(DOOR_IS_OPENING);
+
+			/* DC motor will rotates for 15 seconds to open the door */
+			DcMotor_Rotate(DC_MOTOR_CLOCKWISE, 100);
+
+			/*start counting 15 seconds*/
+			APP_timer(15);
+
+			/* after 15 seconds the motor will stop for 3 seconds */
+			DcMotor_Rotate(DC_MOTOR_STOP, 0);
+
+			/*start counting 3 seconds*/
+			APP_timer(3);
+
+			/* send status to HMIECU to inform it that the door is closing */
+			APP_sendStatusToHMI_ECU(DOOR_IS_CLOSING);
+
+			/* DC motor will rotates Anti-Clockwise for 15 seconds to close the door */
+			DcMotor_Rotate(DC_MOTOR_ANTI_CLOCKWISE, 100);
+
+			/*start counting 15 seconds*/
+			APP_timer(15);
+
+			/* after 15 seconds the motor will stop */
+			DcMotor_Rotate(DC_MOTOR_STOP, 0);
+
+			/* to let HMI_ECU knows to stop displaying DOOR_IS_CLOSING */
+			APP_sendStatusToHMI_ECU(DOOR_IS_CLOSED);
+			break;
+		}
+		else
+		{
+			WrongPasswordCounts++;
+			if(WrongPasswordCounts < 3)
+			{
+				APP_sendStatusToHMI_ECU(PASSWORD_DISMATCH);
+			}
+			else
+			{
+				/* reset the counter to be able to use it again */
+				WrongPasswordCounts = 0;
+
+				/* tell HMI_ECU to display error message */
+				APP_sendStatusToHMI_ECU(ERROR_MESSAGE);
+
+				Buzzer_on(); /* START the alarm */
+
+				/* waiting 1 minute */
+				APP_timer(60);
+
+				Buzzer_off(); /* stop the alarm */
+
+				/* tell HMI_ECU to display the main menu again */
+				APP_sendStatusToHMI_ECU(CONTINUE_PROGRAM);
+				break;
+			}
+		}
+	}
+}
+
+/*
+ * [Function Name]: APP_handleChangePasswordOption
+ * [Description]  : This function is responsible for take two passwords, first one is the password which user entered,
+ * 					the second one is the password saved in External EEPROM and it will compare the two passwords :
+ * 					if they match : save the new password
+ * [Args]  : 1- pointer to uint8
+ * 			 2- pointer to uint8
+ * [Return]: void
+ */
+void APP_handleChangePasswordOption(uint8 *pass, uint8 *EEPROM_pass)
+{
+	while(1)
+	{
+		/* receive the password from the HMI_ECU */
+		APP_receivePassword(pass);
+
+		/* get the password saved in EEPROM */
+		APP_readPasswordFromEEPROM(EEPROM_pass);
+
+		/* check the two password */
+		if(APP_matchPassword(pass, EEPROM_pass) == TRUE)
+		{
+			/* if they match change the password in EEPROM and send the status to inform the HMI_ECU */
+			APP_sendStatusToHMI_ECU(PASSWORD_MATCH);
+
+			while(1)
+			{
+				/* save the password received from HMI_ECU IN EEPROM */
+				if(APP_adjustPasswordFirstTime(pass, EEPROM_pass) == SUCCESS)
+				{
+					APP_sendStatusToHMI_ECU(PASSWORD_MATCH);
+					break;
+				}
+				else
+				{
+					APP_sendStatusToHMI_ECU(PASSWORD_DISMATCH);
+				}
+			}
+
+			WrongPasswordCounts = 0;
+			break;
+		}
+		else
+		{
+			WrongPasswordCounts++;
+			if(WrongPasswordCounts < 3)
+			{
+				APP_sendStatusToHMI_ECU(PASSWORD_DISMATCH);
+			}
+			else
+			{
+				/* reset the wrong password counter */
+				WrongPasswordCounts = 0;
+
+				/* tell HMI_ECU to display error message */
+				APP_sendStatusToHMI_ECU(ERROR_MESSAGE);
+
+				Buzzer_on(); /* START the alarm */
+
+				/* waiting 1 minute */
+				APP_timer(60);
+
+				Buzzer_off(); /* stop the alarm */
+
+				/* tell HMI_ECU to display the main menu again */
+				APP_sendStatusToHMI_ECU(CONTINUE_PROGRAM);
+				break;
+			}
+		}
+	}
+}
+
+/*
+ * [Function Name]: APP_handleTimer
+ * [Description]  : This function is responsible for call back function contains
+ * 					a global variable which increases Every ISR Execution.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_handleTimer(void)
+{
+	seconds_tick++;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,70 @@
+/*******************************************************************************
+ *
+ *  [   Module  ]: Watchdog Timer Driver
+ *
+ *  [ File Name ]: wdt.c
+ *
+ *  [Description]: Source File for Watchdog Timer For AVR.
+ *
+ *  [   Author  ]: Mohamed Saeed
+ *
+ *******************************************************************************/
+
+/*******************************************************************************
+ *                                  INCLUDES
+ *******************************************************************************/
+
+#include "wdt.h"
+#include "wdt_private.h"
+#include "../../utils/common_macros.h"
+
+/*******************************************************************************
+ *                                    MASK's
+ *******************************************************************************/
+
+#define	WDT_TURN_OFF			0x00
+#define WDT_PRESCALER_MASK		0xF8
+
+/*******************************************************************************
+ *                         Implementation FUNCTIONS
+ *******************************************************************************/
+
+/*
+ * [FUNCTION NAME]: WDT_voidSleep
+ * [DISCRIPTION]  : Watchdog Timer Sleep Function.
+ * [Args]  : uint8
+ * [RUTURN]: Void
+ */
+void WDT_voidSleep(uint8 SleepTime)
+{
+	/* Clear the prescaler bits */
+	WDTCR_REG &= WDT_PRESCALER_MASK;
+	/* Set the required prescaler */
+	WDTCR_REG |= SleepTime;
+}
+
+/*
+ * [FUNCTION NAME]: WDT_Enable
+ * [DISCRIPTION]  : Watchdog Timer Enable Function.
+ * [Args]  : Void
+ * [RUTURN]: Void
+ */
+void WDT_Enable(void)
+{
+	/* Enable Watchdog Timer */
+	SET_BIT(WDTCR_REG,WDTCR_WDE);
+}
+
+/*
+ * [FUNCTION NAME]: WDT_Disable
+ * [DISCRIPTION]  : Watchdog Timer Disable Function.
+ * [Args]  : Void
+ * [RUTURN]: Void
+ */
+void WDT_Disable(void)
+{
+	/* Set bit WDTOE and bit WDE */
+	WDTCR_REG |= (1<<WDTCR_WDE) | (1<<WDTCR_WDTOE);
+	/* Turn off WDT */
+	WDTCR_REG = WDT_TURN_OFF;
+}

@@ -1,0 +1,73 @@
+/*******************************************************************************
+ * [   Module  ]: External Interrupts Register Modules
+ *
+ * [ File Name ]: ex_interrupt_private.h
+ *
+ * [Description]: Header File for ATmega32 External Interrupts Register.
+ *
+ * [   Author  ]: Mohamed Saeed
+ *
+ *******************************************************************************/
+
+#ifndef SRC_MCAL_EX_INTERRUPT_EX_INTERRUPT_PRIVATE_H_
+#define SRC_MCAL_EX_INTERRUPT_EX_INTERRUPT_PRIVATE_H_
+
+/*------------------------------------------------------------------------------
+ *                                  INCLUDES
+ *------------------------------------------------------------------------------*/
+
+#include "../../utils/std_types.h"
+
+/*------------------------------------------------------------------------------
+ *                                 DEFINITIONS
+ *------------------------------------------------------------------------------*/
+
+/* Definition for GICR (General Interrupt Control Register) */
+#define GICR_REG	(*(volatile uint8 *)0x5B)
+
+/* Definition for MCUCR (MCU Control Register) */
+#define MCUCR_REG	(*(volatile uint8 *)0x55)
+
+/* Definition for MCUCSR (MCU Control and status Register) */
+#define MCUCSR_REG	(*(volatile uint8 *)0x54)
+
+/* Definition for GIFR (General Interrupt Flag Register) */
+#define GIFR_REG	(*(volatile uint8 *)0x5A)
+
+/* Interrupt vectors */
+
+/* External Interrupt Request 0 */
+#define INT0_vect			_VECTOR(1)
+/* External Interrupt Request 1 */
+#define INT1_vect			_VECTOR(2)
+/* External Interrupt Request 2 */
+#define INT2_vect			_VECTOR(3)
+
+/* Bit numbers */
+
+/* GICR */
+#define GICR_INT1		7
+#define GICR_INT0    	6
+#define GICR_INT2    	5
+
+/* MCUCR */
+#define MCUCR_ISC11  	3
+#define MCUCR_ISC10   	2
+#define MCUCR_ISC01   	1
+#define MCUCR_ISC00   	0
+
+/* MCUCSR */
+#define MCUCSR_ISC2   	6
+
+/* GIFR */
+#define GIFR_INTF1  	7
+#define GIFR_INTF0   	6
+#define GIFR_INTF2   	5
+
+/* Interrupt Handler (ISR) */
+#define _VECTOR(N) 			__vector_ ## N
+#define ISR(vector) \
+	void vector (void) __attribute__ ((signal)); \
+	void vector (void)
+
+#endif /* SRC_MCAL_EX_INTERRUPT_EX_INTERRUPT_PRIVATE_H_ */

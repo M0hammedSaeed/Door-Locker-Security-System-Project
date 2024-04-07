@@ -1,0 +1,186 @@
+/*******************************************************************************
+ *
+ *  [   Module  ]: External Interrupts Modules
+ *
+ *  [ File Name ]: ex_interrupt.c
+ *
+ *  [Description]: Source File for implementation AVR_ATmega32 External Interrupts.
+ *
+ *  [   Author  ]: Mohamed Saeed
+ *
+ *******************************************************************************/
+
+/*******************************************************************************
+ *                                  INCLUDES
+ *******************************************************************************/
+
+#include "ex_interrupt.h"
+#include "ex_interrupt_private.h"
+#include "../../utils/common_macros.h"
+
+/*******************************************************************************
+ *                               Global Variable
+ *******************************************************************************/
+
+/*
+ * [Description]: This Pointer To Function Save the Address Of The function
+ *                That will called when Event or interrupt occur .
+ *
+ *                AND Every Eternal interrupt have g_Pointer To Function .
+ */
+static volatile void(*g_Ptr_To_Fun_INT0)(void) = NULL_PTR;
+static volatile void(*g_Ptr_To_Fun_INT1)(void) = NULL_PTR;
+static volatile void(*g_Ptr_To_Fun_INT2)(void) = NULL_PTR;
+
+/*******************************************************************************
+ *                                 INT0_ISR
+ *******************************************************************************/
+
+/*
+ * [Description]: Here The ISR's specific For EX_INT0
+ */
+ISR(INT0_vect)
+{
+	if(g_Ptr_To_Fun_INT0 != NULL_PTR)
+	{
+		(*g_Ptr_To_Fun_INT0)();
+	}
+}
+
+/*******************************************************************************
+ *                                 INT1_ISR
+ *******************************************************************************/
+
+/*
+ * [Description]: Here The ISR's specific For EX_INT1
+ */
+ISR(INT1_vect)
+{
+	if(g_Ptr_To_Fun_INT1 != NULL_PTR)
+	{
+		(*g_Ptr_To_Fun_INT1)();
+	}
+}
+/*******************************************************************************
+ *                                 INT2_ISR
+ *******************************************************************************/
+
+/*
+ * [Description]: Here The ISR's specific For EX_INT2
+ */
+ISR(INT2_vect)
+{
+	if(g_Ptr_To_Fun_INT2 != NULL_PTR)
+	{
+		(*g_Ptr_To_Fun_INT2)();
+	}
+}
+
+/*******************************************************************************
+ *                                    MASK's
+ *******************************************************************************/
+
+/*------------------------------------------------------------------------------
+ *                      [Masks For External Interrupt sense]
+ * -----------------------------------------------------------------------------*/
+
+/*INT0 Mask's*/
+#define INT0_SENSE_CLR_MASK                0xFC
+#define INT0_SENSE_LOW_LEVEL_MASK          0x00
+#define INT0_SENSE_ANY_LOGICAL_CHANGE_MASK 0x01
+#define INT0_SENSE_FALLING_EDGE_MASK       0x02
+#define INT0_SENSE_RISING_EDGE_MASK        0x03
+
+/*INT1 Mask's*/
+#define INT1_SENSE_CLR_MASK                0xF3
+#define INT1_SENSE_LOW_LEVEL_MASK          0x00
+#define INT1_SENSE_ANY_LOGICAL_CHANGE_MASK 0x04
+#define INT1_SENSE_FALLING_EDGE_MASK       0x08
+#define INT1_SENSE_RISING_EDGE_MASK        0x0C
+
+/*INT2 Mask's*/
+#define INT2_SENSE_CLR_MASK                0xBF
+#define INT2_SENSE_FALLING_EDGE_MASK       0x00
+#define INT2_SENSE_RISING_EDGE_MASK        0x40
+
+/*******************************************************************************
+ *                         Implementation FUNCTIONS
+ *******************************************************************************/
+/*
+ * [FUNCTION NAME]: Ex_INT_Init
+ * [DISCRIPTION]  : This function is responsible to initialization one or more than one EXternal interrupt at
+ *                  The same time from Configuration of External interrupt .
+ * [Args]  : void
+ * [RUTURN]: Void
+ */
+void Ex_INT_Init(void)
+{
+#if EX_INT0 == ENABLE
+	/* Enable External Interrupt 0 */
+	SET_BIT(GICR_REG,GICR_INT0);
+	GPIO_SetPinDir(EX_INT0_PORT, EX_INT0_PIN, pin_input);
+#if	INT0_SENSE_SELECTOR == INT0_SENSE_LOW_LEVEL_MASK
+	MCUCR_REG &= INT0_SENSE_CLR_MASK;
+#elif INT0_SENSE_SELECTOR == INT0_SENSE_ANY_LOGICAL_CHANGE_MASK
+	MCUCR_REG &= INT0_SENSE_CLR_MASK;
+	MCUCR_REG |= INT0_SENSE_ANY_LOGICAL_CHANGE_MASK;
+#elif INT0_SENSE_SELECTOR == INT0_SENSE_FALLING_EDGE_MASK
+	MCUCR_REG &= INT0_SENSE_CLR_MASK;
+	MCUCR_REG |= INT0_SENSE_FALLING_EDGE_MASK;
+#elif INT0_SENSE_SELECTOR == INT0_SENSE_RISING_EDGE_MASK
+	MCUCR_REG &= INT0_SENSE_CLR_MASK;
+	MCUCR_REG |= INT0_SENSE_RISING_EDGE_MASK;
+#endif
+#endif
+
+#if EX_INT1 == ENABLE
+	/* Enable External Interrupt 1 */
+	SET_BIT(GICR_REG,GICR_INT1);
+	GPIO_SetPinDir(EX_INT1_PORT, EX_INT1_PIN, pin_input);
+#if	INT1_SENSE_SELECTOR == INT1_SENSE_LOW_LEVEL_MASK
+	MCUCR_REG &= INT1_SENSE_CLR_MASK;
+#elif INT1_SENSE_SELECTOR == INT1_SENSE_ANY_LOGICAL_CHANGE_MASK
+	MCUCR_REG &= INT1_SENSE_CLR_MASK;
+	MCUCR_REG |= INT1_SENSE_ANY_LOGICAL_CHANGE_MASK;
+#elif INT1_SENSE_SELECTOR == INT1_SENSE_FALLING_EDGE_MASK
+	MCUCR_REG &= INT1_SENSE_CLR_MASK;
+	MCUCR_REG |= INT1_SENSE_FALLING_EDGE_MASK;
+#elif INT1_SENSE_SELECTOR == INT1_SENSE_RISING_EDGE_MASK
+	MCUCR_REG &= INT1_SENSE_CLR_MASK;
+	MCUCR_REG |= INT1_SENSE_RISING_EDGE_MASK;
+#endif
+#endif
+
+#if EX_INT2 == ENABLE
+	/* Enable External Interrupt 2 */
+	SET_BIT(GICR_REG,GICR_INT2);
+	GPIO_SetPinDir(EX_INT2_PORT, EX_INT2_PIN, pin_input);
+#if INT2_SENSE_SELECTOR == INT2_SENSE_FALLING_EDGE_MASK
+	MCUCSR_REG &= INT2_SENSE_CLR_MASK;
+#elif INT2_SENSE_SELECTOR == INT2_SENSE_RISING_EDGE_MASK
+	MCUCSR_REG &= INT2_SENSE_CLR_MASK;
+	MCUCSR_REG |= INT2_SENSE_RISING_EDGE_MASK;
+#endif
+#endif
+}
+
+/*
+ * [FUNCTION NAME]: Ex_INT_SetCallBack
+ * [DISCRIPTION]  : This function allow Application layer call function from
+ *                  MCAL layer by interrupt called callback function.
+ * [Args]  : Pointer To Function take void and return void
+ * [RUTURN]: Void
+ */
+void Ex_INT0_SetCallBack(void (*ptr_To_function)(void))
+{
+	g_Ptr_To_Fun_INT0 = (volatile void *)ptr_To_function;
+}
+
+void Ex_INT1_SetCallBack(void (*ptr_To_function)(void))
+{
+	g_Ptr_To_Fun_INT1 = (volatile void *)ptr_To_function;
+}
+void Ex_INT2_SetCallBack(void (*ptr_To_function)(void))
+{
+	g_Ptr_To_Fun_INT2 = (volatile void *)ptr_To_function;
+}

@@ -1,0 +1,49 @@
+/*******************************************************************************
+ * [ File Name ]: steper_motor.h
+ *
+ * [Description]: Header File that contain functions prototypes Steper Motor.
+ *
+ * [   Author  ]: Mohamed Saeed
+ *
+ *********************************************************************************/
+
+#ifndef SRC_EHAL_STEPPER_MOTOR_STEPPER_MOTOR_H_
+#define SRC_EHAL_STEPPER_MOTOR_STEPPER_MOTOR_H_
+
+/*------------------------------------------------------------------------------
+ *                                  Includes
+ -------------------------------------------------------------------------------*/
+
+#include "../../MCAL/GPIO/gpio.h"
+
+/*------------------------------------------------------------------------------
+ *                              Definitions
+ -------------------------------------------------------------------------------*/
+
+typedef enum{
+
+	STEPPER_FULL_STEP_MODE = 0,
+	STEPPER_HALF_STEP_MODE,
+
+}Stepper_Mode_t;
+
+/*------------------------------------------------------------------------------
+ *                             	 Configuration
+ -------------------------------------------------------------------------------*/
+
+#define STEPPER_PORT			PORTC_ID
+
+#define STEPPER_COIL1_PIN		PIN0_ID
+#define STEPPER_COIL2_PIN		PIN1_ID
+#define STEPPER_COIL3_PIN		PIN2_ID
+#define STEPPER_COIL4_PIN		PIN3_ID
+
+/*------------------------------------------------------------------------------
+ *                             Function Prototype
+ -------------------------------------------------------------------------------*/
+
+void STEPPER_Init(void);
+void STEPPER_RotateCW(Stepper_Mode_t Mode);
+void STEPPER_RotateACW(Stepper_Mode_t Mode);
+
+#endif /* SRC_EHAL_STEPPER_MOTOR_STEPPER_MOTOR_H_ */

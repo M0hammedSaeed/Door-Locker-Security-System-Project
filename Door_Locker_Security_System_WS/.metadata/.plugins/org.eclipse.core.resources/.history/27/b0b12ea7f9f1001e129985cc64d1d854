@@ -1,0 +1,76 @@
+/*******************************************************************************
+ * [Module Name]: app.h
+ *
+ * [Description]: Header file that contain Functions Prototypes for Applications
+ * 				  Human Machine Interface (HMI_ECU).
+ *
+ * [Author]: Mohamed Saeed
+ *******************************************************************************/
+
+#ifndef SRC_APP_APP_H_
+#define SRC_APP_APP_H_
+
+/*******************************************************************************
+ *                                  INCLUDES
+ *******************************************************************************/
+
+#include "../utils/std_types.h"
+
+/*******************************************************************************
+ *                      			Definitions
+ *******************************************************************************/
+
+/* Password Length */
+#define PASSWORD_LENGTH 			5	//
+
+/* These definitions to sync between the 2 ECU */
+#define CONTROL_ECU_READY 			0x10
+#define HMI_ECU_READY 				0x20
+#define DOOR_IS_OPENING  			0X22
+#define DOOR_IS_CLOSING  			0X33
+#define DOOR_IS_CLOSED 				0X44
+#define ERROR_MESSAGE 				0xFF
+#define PASSWORD_MATCH 				0x11
+#define PASSWORD_DISMATCH 			0x00
+#define CONTINUE_PROGRAM 			0X55
+#define OPEN_DOOR_OPTION 			'+'
+#define CHANGE_PASSWORD_OPTION 		'-'
+
+/*******************************************************************************
+ *                     		 	Functions Prototypes                           *
+ *******************************************************************************/
+
+/*
+ * [Function Name]: APP_init
+ * [Description]  : This function is responsible for initialize the application.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_init(void);
+
+/*
+ * [Function Name]: APP_start
+ * [Description]  : This function is responsible for Starting the application.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_start(void);
+
+/*
+ * [Function Name]: APP_timer
+ * [Description]  : This function is responsible for tells the timer to start counting and give it how many milliSecond you want.
+ * [Args]  : uint8 required number of 100 milliSecond
+ * [Return]: void
+ */
+void APP_timer(uint8 delay);
+
+/*
+ * [Function Name]: APP_handleTimer
+ * [Description]  : This function is responsible for call back function contains
+ * 					a global variable which increases Every ISR Execution by 100ms.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_handleTimer(void);
+
+#endif /* SRC_APP_APP_H_ */

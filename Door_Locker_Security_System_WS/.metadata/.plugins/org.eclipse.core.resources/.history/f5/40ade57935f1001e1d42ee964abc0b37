@@ -1,0 +1,25 @@
+/*******************************************************************************
+ * [ File Name ]: servo_motor.h
+ *
+ * [Description]: Header File that contain functions prototypes Servo Motor.
+ *
+ * [   Author  ]: Mohamed Saeed
+ *
+ *********************************************************************************/
+
+#ifndef SRC_EHAL_SERVO_MOTOR_SERVO_MOTOR_H_
+#define SRC_EHAL_SERVO_MOTOR_SERVO_MOTOR_H_
+
+/*******************************************************************************
+ *                                  INCLUDES
+ *******************************************************************************/
+
+#include "../../utils/std_types.h"
+
+/*------------------------------------------------------------------------------
+ *                             Function Prototype
+ -------------------------------------------------------------------------------*/
+void SERVO_Init(void);
+void SERVO_SetAngle(uint8 Angle);
+
+#endif /* SRC_EHAL_SERVO_MOTOR_SERVO_MOTOR_H_ */

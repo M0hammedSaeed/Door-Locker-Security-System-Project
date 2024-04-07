@@ -1,0 +1,241 @@
+/*******************************************************************************
+ *
+ *  [   Module  ]: SPI Module
+ *
+ *  [ File Name ]: spi.c
+ *
+ *  [Description]: Source file for the SPI AVR driver
+ *
+ *  [   Author  ]: Mohamed Saeed
+ *
+ *******************************************************************************/
+
+/*******************************************************************************
+ *                                  Includes
+ *******************************************************************************/
+
+#include "spi.h"
+#include "spi_private.h"
+#include "../GPIO/gpio.h"
+
+/*******************************************************************************
+ *                               Global Variable
+ *******************************************************************************/
+
+/*
+ * [Description]: Pointer To Function Save the Address Of The function
+ *                That will called when Event or interrupt occur .
+ */
+static volatile void(*g_Ptr_To_Fun_SPI)(void) = NULL_PTR;
+
+/*******************************************************************************
+ *                                 SPI_ISR
+ *******************************************************************************/
+
+/*
+ * [Description]: The ISR's specific For SPI Interrupt Enable
+ */
+ISR(SPI_STC_vect)
+{
+	/* Call the Call Back function in the application after the Event is Occur */
+	if(g_Ptr_To_Fun_SPI != NULL_PTR)
+	{
+		/* This is called --> Call Back Notification */
+		/* another method to call the function using pointer to function g_Ptr_To_Fun_SPI(); */
+		(*g_Ptr_To_Fun_SPI)();
+	}
+}
+
+/*******************************************************************************
+ *                      	Functions Definitions
+ *******************************************************************************/
+
+/*
+ * [Function Name]: SPI_Init
+ * [Description]  : Functional responsible for Initialize the SPI device.
+ * [Args]  : Void
+ * [Return]: Void
+ */
+void SPI_Init(void)
+{
+#if SPI_INT_EN == ENABLE
+	SPCR_REG |= SPI_INT_ENABLE; /* Enable SPI Interrupt */
+#elif SPI_INT_EN == DISABLE
+	SPCR_REG &= SPI_INT_DISABLE; /* Disable SPI Interrupt */
+#else
+	#error "wrong SPI_INT_EN configuration"
+#endif
+
+#if SPI_DataOrder_SELECTOR == SPI_DATA_LSB
+	SPCR_REG |= SPI_DATA_LSB; /* Transmit the LSB first */
+#elif SPI_DataOrder_SELECTOR == SPI_DATA_MSB
+	SPCR_REG &= SPI_DATA_MSB; /* Transmit the MSB first */
+#else
+	#error "wrong SPI_DataOrder_SELECTOR configuration"
+#endif
+
+#if SPI_MASTER_SLAVE_SELECTOR == SPI_MASTER
+	SPCR_REG |= SPI_MASTER; /* Enable Master */
+	/******** Configure SPI Master Pins *********
+	 * SS(PB4)   --> Output
+	 * MOSI(PB5) --> Output
+	 * MISO(PB6) --> Input
+	 * SCK(PB7) --> Output
+	 ********************************************/
+	GPIO_SetPinDir(SPI_PORT_ID, SPI_SS_PIN_ID, pin_output);
+	GPIO_SetPinDir(SPI_PORT_ID, SPI_MOSI_PIN_ID, pin_output);
+	GPIO_SetPinDir(SPI_PORT_ID, SPI_MISO_PIN_ID, pin_input);
+	GPIO_SetPinDir(SPI_PORT_ID, SPI_SCK_PIN_ID, pin_output);
+#elif SPI_MASTER_SLAVE_SELECTOR == SPI_SLAVE
+	SPCR_REG &= SPI_SLAVE; /* Enable Slave */
+	/******** Configure SPI Slave Pins *********
+	 * SS(PB4)   --> Input
+	 * MOSI(PB5) --> Input
+	 * MISO(PB6) --> Output
+	 * SCK(PB7) --> Input
+	 ********************************************/
+	GPIO_SetPinDir(SPI_PORT_ID, SPI_SS_PIN_ID, pin_input);
+	GPIO_SetPinDir(SPI_PORT_ID, SPI_MOSI_PIN_ID, pin_input);
+	GPIO_SetPinDir(SPI_PORT_ID, SPI_MISO_PIN_ID, pin_output);
+	GPIO_SetPinDir(SPI_PORT_ID, SPI_SCK_PIN_ID, pin_input);
+#else
+	#error "wrong SPI_MASTER_SLAVE_SELECTOR configuration"
+#endif
+
+#if SPI_CLOCK_POLARITY_SELECTOR == SPI_RISING_LEADING_FALLING_TRAILING
+	SPCR_REG &= SPI_RISING_LEADING_FALLING_TRAILING; /* SCK is low when idle */
+#elif SPI_CLOCK_POLARITY_SELECTOR == SPI_FALLING_LEADING_RISING_TRAILING
+	SPCR_REG |= SPI_FALLING_LEADING_RISING_TRAILING; /* SCK is high when idle */
+#else
+	#error "wrong SPI_CLOCK_POLARITY_SELECTOR configuration"
+#endif
+
+#if SPI_CLOCK_PHASE_SELECTOR == SPI_SETUP_LEADING_SAMPLE_TRAILING
+	SPCR_REG |= SPI_SETUP_LEADING_SAMPLE_TRAILING; /* Data is sampled on trailing (last) and setup on the leading (first) edge of SCK */
+#elif SPI_CLOCK_PHASE_SELECTOR == SPI_SAMPLE_LEADING_SETUP_TRAILING
+	SPCR_REG &= SPI_SAMPLE_LEADING_SETUP_TRAILING; /* data is sampled on leading (first) and setup on the trailing (last) edge of SCK */
+#else
+	#error "wrong SPI_CLOCK_PHASE_SELECTOR configuration"
+#endif
+
+#if SPI_CLOCK_RATE_SELECTOR == SPI_FCPU_BY_4 /* SPI clock = Fosc/4 */
+	SPCR_REG &= SPI_FCPU_BY_clr;
+	SPSR_REG &= SPI_DOUBLE_SPEED_clr;
+	SPCR_REG |= SPI_FCPU_BY_4;
+#elif SPI_CLOCK_RATE_SELECTOR == SPI_FCPU_BY_16 /* SPI clock = Fosc/16 */
+	SPCR_REG &= SPI_FCPU_BY_clr;
+	SPSR_REG &= SPI_DOUBLE_SPEED_clr;
+	SPCR_REG |= SPI_FCPU_BY_16;
+#elif SPI_CLOCK_RATE_SELECTOR == SPI_FCPU_BY_64 /* SPI clock = Fosc/64 */
+	SPCR_REG &= SPI_FCPU_BY_clr;
+	SPSR_REG &= SPI_DOUBLE_SPEED_clr;
+	SPCR_REG |= SPI_FCPU_BY_64;
+#elif SPI_CLOCK_RATE_SELECTOR == SPI_FCPU_BY_128 /* SPI clock = Fosc/128 */
+	SPCR_REG &= SPI_FCPU_BY_clr;
+	SPSR_REG &= SPI_DOUBLE_SPEED_clr;
+	SPCR_REG |= SPI_FCPU_BY_128;
+#elif SPI_CLOCK_RATE_SELECTOR == SPI_DS_FCPU_BY_2 /* SPI clock = Fosc/2 with Double Speed */
+	SPCR_REG &= SPI_FCPU_BY_clr;
+	SPCR_REG |= SPI_DS_FCPU_BY_2;
+	SPSR_REG |= SPI_DOUBLE_SPEED;
+#elif SPI_CLOCK_RATE_SELECTOR == SPI_DS_FCPU_BY_8 /* SPI clock = Fosc/8 with Double Speed */
+	SPCR_REG &= SPI_FCPU_BY_clr;
+	SPCR_REG |= SPI_DS_FCPU_BY_8;
+	SPSR_REG |= SPI_DOUBLE_SPEED;
+#elif SPI_CLOCK_RATE_SELECTOR == SPI_DS_FCPU_BY_32 /* SPI clock = Fosc/32 with Double Speed */
+	SPCR_REG &= SPI_FCPU_BY_clr;
+	SPCR_REG |= SPI_DS_FCPU_BY_32;
+	SPSR_REG |= SPI_DOUBLE_SPEED;
+#elif SPI_CLOCK_RATE_SELECTOR == SPI_DS_FCPU_BY_64 /* SPI clock = Fosc/64 with Double Speed */
+	SPCR_REG &= SPI_FCPU_BY_clr;
+	SPCR_REG |= SPI_DS_FCPU_BY_64;
+	SPSR_REG |= SPI_DOUBLE_SPEED;
+#else
+	#error "wrong SPI_CLOCK_RATE_SELECTOR configuration"
+#endif
+
+	SPCR_REG |= SPI_ENABLE; /* Enable SPI Driver */
+}
+
+/*
+* [Function Name]: SPI_sendReceiveByte
+* [Description]  : Send the required data through SPI to the other SPI device.
+* 					In the same time data will be received from the other device.
+* [Args]  : uint8
+* [Return]: uint8
+*/
+uint8 SPI_sendReceiveByte(uint8 data)
+{
+	/* Initiate the communication and send data by SPI */
+	SPDR_REG = data;
+
+#if SPI_INT_EN == ENABLE
+
+#elif(SPI_INT_EN == DISABLE)
+	/* Wait until SPI interrupt flag SPIF = 1 (data has been sent/received correctly) */
+	while(!(SPSR_REG & (1<<SPSR_SPIF)));
+#endif
+
+	/*
+	 * Note: SPIF flag is cleared by first reading SPSR (with SPIF set) which is done in the previous step.
+	 * and then accessing SPDR like the below line.
+	 */
+	return SPDR_REG;
+}
+
+/*
+* [Function Name]: SPI_sendString
+* [Description]  : Send the required string through SPI to the other SPI device.
+* [Args]  : pointer to constant uint8
+* [Return]: void
+*/
+void SPI_sendString(const uint8 *str)
+{
+	uint8 i = 0;
+	uint8 receivedData = 0;
+
+	/* Send the whole string */
+	while(str[i] != '\0')
+	{
+		/*
+		 * receivedData contains the received data from the other device.
+		 * It is a dummy data variable as we just need to send the string to other device.
+		 */
+		receivedData = SPI_sendReceiveByte(str[i]);
+		i++;
+	}
+}
+
+/*
+* [Function Name]: SPI_receiveString
+* [Description]  : Receive the required string until the '#' symbol through SPI from the other SPI device.
+* [Args]  : pointer to uint8
+* [Return]: void
+*/
+void SPI_receiveString(uint8 *str)
+{
+	uint8 i = 0;
+	/* Receive the first byte */
+	str[i] = SPI_sendReceiveByte(SPI_DEFAULT_DATA_VALUE);
+
+	/* Receive the whole string until the '#' */
+	while(str[i] != '#')
+	{
+		i++;
+		str[i] = SPI_sendReceiveByte(SPI_DEFAULT_DATA_VALUE);
+	}
+
+	/* After receiving the whole string plus the '#', replace the '#' with '\0' */
+	str[i] = '\0';
+}
+
+/*
+* [Function Name]: SPI_SetCallBack
+* [Description]  : This function's is responsible to set the Call Back function address.
+* [Args]  : Pointer To Function take void and return void
+* [Return]: Void
+*/
+void SPI_SetCallBack(void (*Ptr_To_fun)(void))
+{
+	g_Ptr_To_Fun_SPI = (volatile void *)Ptr_To_fun;
+}

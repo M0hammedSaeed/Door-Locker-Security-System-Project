@@ -1,0 +1,415 @@
+/*******************************************************************************
+ * [Module Name]: app.c
+ *
+ * [Description]: Source file that contain Implementation Functions for Applications
+ * 				  Human Machine Interface (HMI_ECU).
+ *
+ * [Author]: Mohamed Saeed
+ *******************************************************************************/
+
+/*******************************************************************************
+ *                                  Includes
+ *******************************************************************************/
+
+#include "app.h"
+#include "../EHAL/KEYPAD/keypad.h"
+#include "../EHAL/LCD/lcd.h"
+#include "../MCAL/TIMER/timer.h"
+#include "../MCAL/UART/uart.h"
+#include "../MCAL/G_INTERRUPT/g_interrupt.h"
+
+/*******************************************************************************
+ *                               Global Variable
+ *******************************************************************************/
+
+/* the milliSecond counter */
+uint8 milliSecond_tick = 0;
+
+/* Contains the status of the passwords sent by control ECU */
+uint8 status;
+
+/*******************************************************************************
+ *                      		Functions Definitions
+ *******************************************************************************/
+
+/*
+ * [Function Name]: APP_init
+ * [Description]  : This function is responsible for initialize the application.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_init(void)
+{
+	/* LCD Initialization */
+	LCD_init();
+	/* callback function of timer1 */
+	TIMER1_SetCallBack(APP_handleTimer);
+	/* Initialize the USART driver */
+	USART_Init();
+	/* Enable (I-bit) */
+	GI_Enable();
+}
+
+/*
+ * [Function Name]: APP_start
+ * [Description]  : This function is responsible for Starting the application.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_start(void)
+{
+	/* Contain First Password Taken From User */
+	uint8 f_pass_buffer[PASSWORD_LENGTH];
+
+	/* Contain Second Password Taken From User */
+	uint8 s_pass_buffer[PASSWORD_LENGTH];
+
+	/* Ask User to Enter The password for first time the we check if two password are matched or not */
+	APP_displayEnterPasswordAndCheckStatus(f_pass_buffer, s_pass_buffer);
+
+	/* this while loop used to keep asking the user to choose from the main menu */
+	while(1)
+	{
+		APP_userOption(f_pass_buffer, s_pass_buffer);
+	}
+}
+
+/*
+ * [Function Name]: APP_timer
+ * [Description]  : This function is responsible for tells the timer to start counting and give it how many milliSecond you want.
+ * [Args]  : uint8 required number of 100 milliSecond
+ * [Return]: void
+ */
+void APP_timer(uint8 delay)
+{
+	/* Initialize the timer */
+	TIMER_Init();
+
+	/* waiting until the seconds count reaches the specified no. of seconds */
+	while(milliSecond_tick < delay);
+
+	/* Stop The Timer1 */
+	TIMER_DeInit();
+
+	/* reset number of ticks */
+	milliSecond_tick = 0;
+}
+
+/*
+ * [Function Name]: APP_handleTimer
+ * [Description]  : This function is responsible for call back function contains
+ * 					a global variable which increases Every ISR Execution by 100ms.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_handleTimer(void)
+{
+	milliSecond_tick++;
+}
+
+/*
+ * [Function Name]: APP_adjustAnDisplay_Password
+ * [Description]  : This function is responsible for Take the password from keypad and display '*' on the screen to hide password.
+ * [Args]  : pointer to uint8
+ * [Return]: void
+ */
+void APP_adjustAndDisplay_Password(uint8 *pass)
+{
+	for(uint8 i=0; i<PASSWORD_LENGTH; i++)
+	{
+		/* get The Pressed Key into The Password Buffer */
+		pass[i] = KEYPAD_getPressedKey();
+
+		/* Display '*' on the screen */
+		LCD_moveCursor(1, i+12);
+		LCD_displayCharacter('*');
+
+		/* This delay to give chance to take the pressed key in the next Iteration */
+		APP_timer(5);
+	}
+	/* Polling Until Enter Key is Pressed */
+	while(KEYPAD_getPressedKey() != ENTER_KEY);
+	APP_timer(5);
+}
+
+/*
+ * [Function Name]: APP_sendPasswordToControl_ECU
+ * [Description]  : This function is responsible for send the password to control_ECU if it is ready to receive.
+ * [Args]  : pointer to constant uint8
+ * [Return]: void
+ */
+void APP_sendPasswordToControl_ECU(const uint8 *pass)
+{
+	/* Send dummy byte to tell control_ECU that HMI_ECU is ready */
+	USART_sendByte(HMI_ECU_READY);
+
+	/* Wait until Control_ECU reply that it is ready to receive password */
+	while(USART_recieveByte() != CONTROL_ECU_READY);
+
+	/* Send password to control_ECU by USART driver byte by byte */
+	for(uint8 i=0; i<PASSWORD_LENGTH; i++)
+	{
+		USART_sendByte(pass[i]);
+	}
+}
+
+/*
+ * [Function Name]: APP_displayEnterPassword
+ * [Description]  : This function is responsible for Asks the user to enter password then send the two passwords
+   	   	   	   	    to control_ECU to check if they match or not At the beginning of the program.
+ * [Args]  : 1- pointer to uint8
+ * 			 2- pointer to uint8
+ * [Return]: void
+ */
+void APP_displayEnterPassword(uint8 *f_pass, uint8 *s_pass)
+{
+	/* Take first password */
+	LCD_clearScreen();
+	LCD_moveCursor(0, 3);
+	LCD_displayString("Please Enter The Password");
+	/* Display '*' on the screen*/
+	APP_adjustAndDisplay_Password(f_pass);
+
+	/* Take second password */
+	LCD_clearScreen();
+	LCD_moveCursor(0, 3);
+	LCD_displayString("Please Re-Enter The Password");
+	/* Display '*' on the screen*/
+	APP_adjustAndDisplay_Password(s_pass);
+	LCD_clearScreen();
+
+	/* Send Passwords to control ECU */
+	APP_sendPasswordToControl_ECU(f_pass);
+	APP_sendPasswordToControl_ECU(s_pass);
+}
+
+/*
+ * [Function Name]: APP_displayUserOptions
+ * [Description]  : This function is responsible for display the options menu which the user will choose from it (Open door / Change Password).
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_displayUserOptions(void)
+{
+	LCD_clearScreen();
+	LCD_moveCursor(0, 4);
+	LCD_displayString("(+): Open Door");
+
+	LCD_moveCursor(1, 4);
+	LCD_displayString("(-): Change Password");
+}
+
+/*
+ * [Function Name]: APP_recievePasswordStatus
+ * [Description]  : This function is responsible for gets the status from control_ECU of the passwords (matching or not).
+ * [Args]  : void
+ * [Return]: uint8
+ */
+uint8 APP_recievePasswordStatus(void)
+{
+	/* Wait until the control_ECU is ready to send the status */
+	while(USART_recieveByte()!= CONTROL_ECU_READY);
+	USART_sendByte(HMI_ECU_READY);
+
+	/*read the status*/
+	return USART_recieveByte();
+}
+
+/*
+ * [Function Name]: APP_displayEnterPasswordAndCheckStatus
+ * [Description]  : This function is responsible for takes two passwords, check if they are matched or not
+ *					and display the result on LCD.
+ * [Args]  : 1- pointer to uint8
+ * 			 2- pointer to uint8
+ * [Return]: void
+ */
+void APP_displayEnterPasswordAndCheckStatus(uint8 *f_pass, uint8 *s_pass)
+{
+	/* This loop doesn't terminate until the write password Entered */
+	while(1)
+	{
+		/* First Ask User To Enter Password */
+		APP_displayEnterPassword(f_pass, s_pass);
+
+		/* Control_ECU Will Check Status Of these two Passwords (Matching or not) */
+		status = APP_recievePasswordStatus();
+
+		if(status == PASSWORD_MATCH)
+		{
+			LCD_clearScreen();
+			LCD_moveCursor(0, 4);
+			LCD_displayString("Correct Password");
+			APP_timer(5);
+			break;
+		}
+		else
+		{
+			/* Stay in While loop if two Password doesn't match */
+			LCD_clearScreen();
+			LCD_moveCursor(0, 4);
+			LCD_displayString("In Correct Password");
+			APP_timer(5);
+		}
+	}
+}
+
+/*
+ * [Function Name]: APP_sendOption
+ * [Description]  : This function is responsible for sends the option which user chose from the main menu to be handled in control_ECU side.
+ * [Args]  : uint8
+ * [Return]: void
+ */
+void APP_sendOption(uint8 option)
+{
+	USART_sendByte(HMI_ECU_READY);
+	/* Wait until the control ECU is ready to receive option */
+	while(USART_recieveByte() != CONTROL_ECU_READY);
+	USART_sendByte(option);
+}
+
+/*
+ * [Function Name]: APP_takeOption
+ * [Description]  : This function is responsible for take the user's option (pressed key).
+ * [Args]  : void
+ * [Return]: uint8
+ */
+uint8 APP_takeOption(void)
+{
+	return KEYPAD_getPressedKey();
+}
+
+/*
+ * [Function Name]: APP_userOption
+ * [Description]  : This function is responsible for Display the main options ,then send the option to the control_ECU.
+ * [Args]  : 1- pointer to uint8
+ * 			 2- pointer to uint8
+ * [Return]: void
+ */
+void APP_userOption(uint8 *f_pass, uint8 *s_pass)
+{
+	/* Display User options (Open door / Change Password) */
+	APP_displayUserOptions();
+
+	/* Send user option To Control_ECU */
+	APP_sendOption(APP_takeOption());
+
+	switch(APP_takeOption())
+	{
+	case OPEN_DOOR_OPTION:
+		/* This Loop won't terminate until The password is correctly entered */
+		while(1)
+		{
+			/* Ask user to enter the password */
+			LCD_clearScreen();
+			LCD_moveCursor(0,4);
+			LCD_displayString("Please Enter Password : ");
+			APP_timer(3);
+
+			/* Display '*' on the screen */
+			APP_adjustAndDisplay_Password(f_pass);
+			/* Send the password to control_ECU to check it matches with the saved password or not */
+			APP_sendPasswordToControl_ECU(f_pass);
+
+			/* Receive the status of the password (Matches or not) */
+			status = APP_recievePasswordStatus();
+
+			/* Check on the status comes from Control_ECU */
+			if(status == DOOR_IS_OPENING)
+			{
+				/* Opening The door as The password Matched */
+				LCD_clearScreen();
+				LCD_moveCursor(0, 4);
+				LCD_displayString("Door is Opening...");
+
+				/* Waiting Control ECU To decide when we close the door */
+				status = APP_recievePasswordStatus();
+
+				/* If the status sent by control ECU is CLOSING_DOOR */
+				if(status == DOOR_IS_CLOSING)
+				{
+					/* Opening The door as The password Matched */
+					LCD_clearScreen();
+					LCD_moveCursor(0, 4);
+					LCD_displayString("closing The Door");
+
+					/* Wait Until The door is closed to return to main menu*/
+					while(APP_recievePasswordStatus() != DOOR_IS_CLOSED);
+					break;
+				}
+			}
+			else if(status == PASSWORD_DISMATCH)
+			{
+				LCD_clearScreen();
+				LCD_moveCursor(0, 4);
+				LCD_displayString("Wrong Password !");
+				APP_timer(5);
+				/* no break as if the password is wrong for 3 times ,Alarm will turn on */
+			}
+			else if(status == ERROR_MESSAGE)
+			{
+				LCD_clearScreen();
+				LCD_moveCursor(0, 4);
+				LCD_displayString("Thief !!!!!!!");
+
+				/* to wait until receive continue program status
+				 * to display the main menu again */
+				while(APP_recievePasswordStatus() != CONTINUE_PROGRAM);
+				break;
+			}
+		}
+		break;
+
+	case CHANGE_PASSWORD_OPTION:
+		/* This Loop won't terminate until The password is correctly entered */
+		while(1)
+		{
+			/* Tell the user to enter the old password*/
+			LCD_clearScreen();
+			LCD_moveCursor(0,4);
+			LCD_displayString("Please Enter Password : ");
+			APP_timer(3);
+
+			/* Take the password from the user and display '*' */
+			APP_adjustAndDisplay_Password(f_pass);
+
+			/* Send the password to control_ECU to check it  */
+			APP_sendPasswordToControl_ECU(f_pass);
+
+			/* Receive the status of the password (Matches or not) */
+			status = APP_recievePasswordStatus();
+
+			/* Check on the status comes from Control_ECU */
+			if(status == PASSWORD_MATCH)
+			{
+				/* Opening The door as The password Matched */
+				LCD_clearScreen();
+				LCD_moveCursor(0, 4);
+				LCD_displayString("Changing The Password....");
+				APP_timer(10);
+				/* Check The Entered Password */
+				APP_displayEnterPasswordAndCheckStatus(f_pass, s_pass);
+				break;
+			}
+			else if(status == PASSWORD_DISMATCH)
+			{
+				LCD_clearScreen();
+				LCD_moveCursor(0, 4);
+				LCD_displayString("Incorrect Password !");
+				APP_timer(5);
+				/* No break statement to keep asking about the password */
+			}
+			else if(status == ERROR_MESSAGE)
+			{
+				LCD_clearScreen();
+				LCD_moveCursor(0, 4);
+				LCD_displayString("ERROR !");
+
+				/* to wait until receive continue program status
+				 * to display the main menu again */
+				while(APP_recievePasswordStatus() != CONTINUE_PROGRAM);
+				break;
+			}
+		}
+		break;
+	}
+}

@@ -1,0 +1,148 @@
+/*******************************************************************************
+ * [Module Name]: app.c
+ *
+ * [Description]: Source file that contain Implementation Functions for Applications
+ * 				  Human Machine Interface (HMI_ECU).
+ *
+ * [Author]: Mohamed Saeed
+ *******************************************************************************/
+
+/*******************************************************************************
+ *                                  Includes
+ *******************************************************************************/
+
+#include "app.h"
+#include "../EHAL/KEYPAD/keypad.h"
+#include "../EHAL/LCD/lcd.h"
+#include "../MCAL/TIMER/timer.h"
+#include "../MCAL/UART/uart.h"
+#include "../MCAL/G_INTERRUPT/g_interrupt.h"
+
+/*******************************************************************************
+ *                               Global Variable
+ *******************************************************************************/
+
+/* the milliSecond counter */
+uint8 milliSecond_tick = 0;
+
+/*******************************************************************************
+ *                      		Functions Definitions
+ *******************************************************************************/
+
+/*
+ * [Function Name]: APP_init
+ * [Description]  : This function is responsible for initialize the application.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_init(void)
+{
+	LCD_init();
+	GI_Enable();
+	TIMER1_SetCallBack(APP_handleTimer);
+}
+
+/*
+ * [Function Name]: APP_start
+ * [Description]  : This function is responsible for Starting the application.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_start(void)
+{
+}
+
+/*
+ * [Function Name]: APP_timer
+ * [Description]  : This function is responsible for tells the timer to start counting and give it how many milliSecond you want.
+ * [Args]  : uint8 required number of 100 milliSecond
+ * [Return]: void
+ */
+void APP_timer(uint8 delay)
+{
+	/* Initialize the timer */
+	TIMER_Init();
+
+	/* waiting until the seconds count reaches the specified no. of seconds */
+	while(milliSecond_tick < delay);
+
+	/* Stop The Timer1 */
+	TIMER_DeInit(1);
+
+	/* reset number of ticks */
+	milliSecond_tick = 0;
+}
+
+/*
+ * [Function Name]: APP_handleTimer
+ * [Description]  : This function is responsible for call back function contains
+ * 					a global variable which increases Every ISR Execution by 100ms.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_handleTimer(void)
+{
+	milliSecond_tick++;
+}
+
+/*
+ * [Function Name]: APP_adjustAnDisplay_Password
+ * [Description]  : This function is responsible for Take the password from keypad and display '*' on the screen to hide password.
+ * [Args]  : pointer to uint8
+ * [Return]: void
+ */
+void APP_adjustAnDisplay_Password(uint8* pass)
+{
+	for(uint8 i=0; i<PASSWORD_LENGTH; i++)
+	{
+		/* get The Pressed Key into The Password Buffer */
+		pass[i] = KEYPAD_getPressedKey();
+
+		/* Display '*' on the screen */
+		LCD_moveCursor(1, i+12);
+		LCD_displayCharacter('*');
+
+		/* This delay to give chance to take the pressed key in the next Iteration */
+		APP_timer(5);
+	}
+	/* Polling Until Enter Key is Pressed */
+	while(KEYPAD_getPressedKey() != ENTER_KEY);
+	APP_timer(5);
+}
+
+/*
+ * [Function Name]: APP_adjustAnDisplay_Password
+ * [Description]  : This function is responsible for Take the password from keypad and display '*' on the screen to hide password.
+ * [Args]  : pointer to uint8
+ * [Return]: void
+ */
+void APP_sendPasswordToControl_ECU(uint8* pass)
+{
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

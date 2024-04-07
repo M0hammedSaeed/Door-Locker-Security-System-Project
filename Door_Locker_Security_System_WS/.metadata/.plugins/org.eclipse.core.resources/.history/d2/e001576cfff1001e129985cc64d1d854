@@ -1,0 +1,222 @@
+/*******************************************************************************
+ * [Module Name]: app.c
+ *
+ * [Description]: Source file that contain Implementation Functions for Applications
+ * 				  Human Machine Interface (HMI_ECU).
+ *
+ * [Author]: Mohamed Saeed
+ *******************************************************************************/
+
+/*******************************************************************************
+ *                                  Includes
+ *******************************************************************************/
+
+#include "app.h"
+#include "../EHAL/KEYPAD/keypad.h"
+#include "../EHAL/LCD/lcd.h"
+#include "../MCAL/TIMER/timer.h"
+#include "../MCAL/UART/uart.h"
+#include "../MCAL/G_INTERRUPT/g_interrupt.h"
+
+/*******************************************************************************
+ *                               Global Variable
+ *******************************************************************************/
+
+/* the milliSecond counter */
+uint8 milliSecond_tick = 0;
+
+/* Contains the status of the passwords sent by control ECU*/
+uint8 status;
+
+/*******************************************************************************
+ *                      		Functions Definitions
+ *******************************************************************************/
+
+/*
+ * [Function Name]: APP_init
+ * [Description]  : This function is responsible for initialize the application.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_init(void)
+{
+	LCD_init();
+	GI_Enable();
+	TIMER1_SetCallBack(APP_handleTimer);
+	USART_Init();
+}
+
+/*
+ * [Function Name]: APP_start
+ * [Description]  : This function is responsible for Starting the application.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_start(void)
+{
+}
+
+/*
+ * [Function Name]: APP_timer
+ * [Description]  : This function is responsible for tells the timer to start counting and give it how many milliSecond you want.
+ * [Args]  : uint8 required number of 100 milliSecond
+ * [Return]: void
+ */
+void APP_timer(uint8 delay)
+{
+	/* Initialize the timer */
+	TIMER_Init();
+
+	/* waiting until the seconds count reaches the specified no. of seconds */
+	while(milliSecond_tick < delay);
+
+	/* Stop The Timer1 */
+	TIMER_DeInit(1);
+
+	/* reset number of ticks */
+	milliSecond_tick = 0;
+}
+
+/*
+ * [Function Name]: APP_handleTimer
+ * [Description]  : This function is responsible for call back function contains
+ * 					a global variable which increases Every ISR Execution by 100ms.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_handleTimer(void)
+{
+	milliSecond_tick++;
+}
+
+/*
+ * [Function Name]: APP_adjustAnDisplay_Password
+ * [Description]  : This function is responsible for Take the password from keypad and display '*' on the screen to hide password.
+ * [Args]  : pointer to uint8
+ * [Return]: void
+ */
+void APP_adjustAnDisplay_Password(uint8* pass)
+{
+	for(uint8 i=0; i<PASSWORD_LENGTH; i++)
+	{
+		/* get The Pressed Key into The Password Buffer */
+		pass[i] = KEYPAD_getPressedKey();
+
+		/* Display '*' on the screen */
+		LCD_moveCursor(1, i+12);
+		LCD_displayCharacter('*');
+
+		/* This delay to give chance to take the pressed key in the next Iteration */
+		APP_timer(5);
+	}
+	/* Polling Until Enter Key is Pressed */
+	while(KEYPAD_getPressedKey() != ENTER_KEY);
+	APP_timer(5);
+}
+
+/*
+ * [Function Name]: APP_sendPasswordToControl_ECU
+ * [Description]  : This function is responsible for send the password to control_ECU if it is ready to receive.
+ * [Args]  : pointer to constant uint8
+ * [Return]: void
+ */
+void APP_sendPasswordToControl_ECU(const uint8* pass)
+{
+	/* Send dummy byte to tell control_ECU that HMI_ECU is ready */
+	USART_sendByte(HMI_ECU_READY);
+
+	/* Wait until Control_ECU reply that it is ready to receive password */
+	while(USART_recieveByte() != CONTROL_ECU_READY);
+
+	/* Send password to control_ECU by USART driver byte by byte */
+	for(uint8 i=0; i<PASSWORD_LENGTH; i++)
+	{
+		USART_sendByte(pass[i]);
+	}
+}
+
+/*
+ * [Function Name]: APP_displayEnterPassword
+ * [Description]  : This function is responsible for Asks the user to enter password then send the two passwords
+   	   	   	   	    to control_ECU to check if they match or not At the beginning of the program.
+ * [Args]  : 1- pointer to uint8
+ * 			 2- pointer to uint8
+ * [Return]: void
+ */
+void APP_displayEnterPassword(uint8* f_pass, uint8 s_pass)
+{
+	/* Take first password */
+	LCD_clearScreen();
+	LCD_moveCursor(0, 3);
+	LCD_displayString("Please Enter The Password");
+	/* Display '*' on the screen*/
+	APP_adjustAnDisplay_Password(f_pass);
+
+	/* Take second password */
+	LCD_clearScreen();
+	LCD_moveCursor(0, 3);
+	LCD_displayString("Please Re-Enter The Password");
+	/* Display '*' on the screen*/
+	APP_adjustAnDisplay_Password(s_pass);
+	LCD_clearScreen();
+
+	/* Send Passwords to control ECU */
+	APP_sendPasswordToControl_ECU(f_pass);
+	APP_sendPasswordToControl_ECU(s_pass);
+}
+
+/*
+ * [Function Name]: APP_displayUserOptions
+ * [Description]  : This function is responsible for display the options menu which the user will choose from it (Open door / Change Password).
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_displayUserOptions(void)
+{
+	LCD_clearScreen();
+	LCD_moveCursor(0, 4);
+	LCD_displayString("(+): Open Door");
+
+	LCD_moveCursor(1, 4);
+	LCD_displayString("(-): Change Password");
+}
+
+/*
+ * [Function Name]: APP_displayEnterPasswordAndCheckStatus
+ * [Description]  : This function is responsible for takes two passwords, check if they are matched or not
+					and display the result on LCD.
+ * [Args]  : 1- pointer to uint8
+ * 			 2- pointer to uint8
+ * [Return]: void
+ */
+void APP_displayEnterPasswordAndCheckStatus(uint8* f_pass, uint8 s_pass)
+{
+	/* This loop doesn't terminate until the write password Entered */
+	while(1)
+	{
+		/* First Ask User To Enter Password */
+		APP_displayEnterPassword(f_pass, s_pass);
+
+		stat
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

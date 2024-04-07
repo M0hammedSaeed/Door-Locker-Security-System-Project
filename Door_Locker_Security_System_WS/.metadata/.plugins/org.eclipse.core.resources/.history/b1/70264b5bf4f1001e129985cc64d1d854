@@ -1,0 +1,83 @@
+/*******************************************************************************
+ * [Module Name]: app.c
+ *
+ * [Description]: Source file that contain Implementation Functions for Applications
+ * 				  Human Machine Interface (HMI_ECU).
+ *
+ * [Author]: Mohamed Saeed
+ *******************************************************************************/
+
+/*******************************************************************************
+ *                                  Includes
+ *******************************************************************************/
+
+#include "app.h"
+#include "../EHAL/KEYPAD/keypad.h"
+#include "../EHAL/LCD/lcd.h"
+#include "../MCAL/TIMER/timer.h"
+#include "../MCAL/UART/uart.h"
+#include "../MCAL/G_INTERRUPT/g_interrupt.h"
+
+/*******************************************************************************
+ *                               Global Variable
+ *******************************************************************************/
+
+
+/*******************************************************************************
+ *                      		Functions Definitions
+ *******************************************************************************/
+
+/*
+ * [Function Name]: APP_init
+ * [Description]  : This function is responsible for initialize the application.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_init(void)
+{
+
+}
+
+/*
+ * [Function Name]: APP_start
+ * [Description]  : This function is responsible for Starting the application.
+ * [Args]  : void
+ * [Return]: void
+ */
+void APP_start(void)
+{
+
+}
+
+void APP_adjustAnDisplay_Password(uint8* pass)
+{
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

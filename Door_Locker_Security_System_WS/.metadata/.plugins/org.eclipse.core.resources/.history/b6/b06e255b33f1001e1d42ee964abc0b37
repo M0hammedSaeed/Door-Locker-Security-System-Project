@@ -1,0 +1,43 @@
+/*******************************************************************************
+ * [ File Name ]: servo_motor.c
+ *
+ * [Description]: Source File that contain functions prototypes Servo Motor.
+ *
+ * [   Author  ]: Mohamed Saeed
+ *
+ *********************************************************************************/
+
+/*******************************************************************************
+ *                                  INCLUDES
+ *******************************************************************************/
+#include "servo_motor.h"
+#include "../../MCAL/TIMER/timer.h"
+
+/*******************************************************************************
+ *                         Implementation FUNCTIONS
+ *******************************************************************************/
+
+
+void SERVO_Init(void)
+{
+	/* set timer 1 prescaler to 1to get 8us tick time
+	 * use fast mode with top value at OCRA reg to set the freq of servo
+	 * diconnect OC1A PIN ,and generate the PWM on OC1B PIN with non inverting mode
+	 * to use OCR1B reg as the ton value
+	 */
+	Timer1_PWM_DutyCycle(124);
+}
+void SERVO_SetAngle(uint8 Angle)
+{
+	/* Set Servo shaft at 0° position by 1 ms pulse */
+		if(Angle == 0)
+			Timer1_PWM_DutyCycle(124);	/* Set the compare value */
+
+		/* Set Servo shaft at 90° position by 1.5 ms pulse */
+		else if(Angle == 90)
+			Timer1_PWM_DutyCycle(187);	/* Set the compare value */
+
+		/* Set Servo shaft at 180° position by 2 ms pulse */
+		else if(Angle == 180)
+			Timer1_PWM_DutyCycle(249);	/* Set the compare value */
+}

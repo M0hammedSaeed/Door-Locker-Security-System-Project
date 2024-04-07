@@ -1,0 +1,53 @@
+/*******************************************************************************
+ * [ File Name ]: led.h
+ *
+ * [Description]: Header File that contain functions prototypes for LEDs.
+ *
+ * [   Author  ]: Mohamed Saeed
+ *
+ *******************************************************************************/
+
+#ifndef SRC_EHAL_LED_LED_H_
+#define SRC_EHAL_LED_LED_H_
+
+/*------------------------------------------------------------------------------
+ *                                  Includes
+ -------------------------------------------------------------------------------*/
+#include "../../MCAL/GPIO/gpio.h"
+#include "../../utils/std_types.h"
+
+/*------------------------------------------------------------------------------
+ *                              Definitions
+ -------------------------------------------------------------------------------*/
+
+#define NIGATIVE_LOGIC		0
+#define POSITIVE_LOGIC		1
+
+typedef enum
+{
+	RED_LED_ID
+}EN_LedType_t;
+
+typedef enum
+{
+	LED_OFF,
+	LED_ON
+}EN_LedState_t;
+
+/*------------------------------------------------------------------------------
+ *                             	 Configuration
+ -------------------------------------------------------------------------------*/
+
+#define LED_1_CONFIG			NIGATIVE_LOGIC
+#define LED_1_PORT_ID			PORTB_ID
+#define LED_1_PIN_ID			PIN3_ID
+
+/*------------------------------------------------------------------------------
+ *                             Function Prototype
+ -------------------------------------------------------------------------------*/
+
+EN_LedState_t LED_TurnOn(EN_LedType_t LED_ID);
+EN_LedState_t LED_TurnOff(EN_LedType_t LED_ID);
+EN_LedState_t LED_TurnToggle(EN_LedType_t LED_ID);
+
+#endif /* SRC_EHAL_LED_LED_H_ */

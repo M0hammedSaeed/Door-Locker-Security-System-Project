@@ -1,0 +1,70 @@
+/*******************************************************************************
+ * [ File Name ]: dc_motor.c
+ *
+ * [Description]:  Source File that contain functions prototypes DC-Motor.
+ *
+ * [   Author  ]: Mohamed Saeed
+ *
+ *********************************************************************************/
+
+/*------------------------------------------------------------------------------
+ *                                  Includes
+ -------------------------------------------------------------------------------*/
+
+#include "dc_motor.h"
+#include "../../MCAL/GPIO/gpio.h"
+#include "../../MCAL/TIMER/timer.h"
+
+/*------------------------------------------------------------------------------
+ *                               FUNCTIONS IMPLEMENTATION
+ *------------------------------------------------------------------------------*/
+
+/*
+ * [Function Name]: DcMotor_Init
+ * [Description]  :  Initialize the DC Motor by:
+ * 					 1. Setup the direction of the two motor pins as output by send the request to GPIO driver.
+ * 					 2. Stop the motor at the beginning
+ * [Args]  : void
+ * [Return]: Void
+ */
+void DcMotor_Init(void)
+{
+	/* Setup the motor pins as output pins */
+	GPIO_SetPinDir(DC_MOTOR_PORT_ID, DC_MOTOR_PIN1_ID, pin_output);
+	GPIO_SetPinDir(DC_MOTOR_PORT_ID, DC_MOTOR_PIN2_ID, pin_output);
+
+	/* Motor is stopped at the beginning */
+	GPIO_WritePin(DC_MOTOR_PORT_ID, DC_MOTOR_PIN1_ID, logic_low);
+	GPIO_WritePin(DC_MOTOR_PORT_ID, DC_MOTOR_PIN2_ID, logic_low);
+}
+
+/*
+ * [Function Name]: DcMotor_Rotate
+ * [Description]  :  The function responsible for rotate the DC Motor CW/ or A-CW or stop the motor based on the motor state.
+ * 					 Send the required duty cycle to the PWM driver based on the required speed value.
+ * [Args]  : 1- Enum to select State
+ * 			 2- uint8 to select Speed
+ * [Return]: Void
+ */
+void DcMotor_Rotate(EN_DcMotorState_t state, uint8 speed)
+{
+	if(state == DC_MOTOR_CLOCKWISE)
+	{
+		GPIO_WritePin(DC_MOTOR_PORT_ID, DC_MOTOR_PIN1_ID, logic_low);
+		GPIO_WritePin(DC_MOTOR_PORT_ID, DC_MOTOR_PIN2_ID, logic_high);
+
+	}
+	else if(state == DC_MOTOR_ANTI_CLOCKWISE)
+	{
+		GPIO_WritePin(DC_MOTOR_PORT_ID, DC_MOTOR_PIN1_ID, logic_high);
+		GPIO_WritePin(DC_MOTOR_PORT_ID, DC_MOTOR_PIN2_ID, logic_low);
+	}
+	else
+	{
+		GPIO_WritePin(DC_MOTOR_PORT_ID, DC_MOTOR_PIN1_ID, logic_low);
+		GPIO_WritePin(DC_MOTOR_PORT_ID, DC_MOTOR_PIN2_ID, logic_low);
+	}
+
+	/* decimal value for the required motor speed, it should be from 0 --> 100 */
+	Timer0_PWM_DutyCycle(speed);
+}

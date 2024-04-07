@@ -1,0 +1,87 @@
+/*******************************************************************************
+ * [ File Name ]: led.c
+ *
+ * [Description]: Source File that contain implementation functions for LEDs.
+ *
+ * [   Author  ]: Mohamed Saeed
+ *
+ *******************************************************************************/
+
+/*------------------------------------------------------------------------------
+ *                                  Includes
+ -------------------------------------------------------------------------------*/
+
+#include "led.h"
+
+/*------------------------------------------------------------------------------
+ *                               FUNCTIONS IMPLEMENTATION
+ *------------------------------------------------------------------------------*/
+
+EN_LedState_t LED_TurnOn(EN_LedType_t LED_ID)
+{
+	switch(LED_ID)
+	{
+	case RED_LED_ID:
+		GPIO_SetPinDir(LED_1_PORT_ID, LED_1_PIN_ID, pin_output);
+#if(RED_LED_CONFIG == NIGATIVE_LOGIC)
+		GPIO_WritePin(LED_1_PORT_ID, LED_1_PIN_ID, logic_low);
+#elif(RED_LED_CONFIG == POSITIVE_LOGIC)
+		GPIO_WritePin(LED_1_PORT_ID, LED_1_PIN_ID, logic_high);
+#endif
+		break;
+	}
+	return LED_ON;
+}
+
+EN_LedState_t LED_TurnOff(EN_LedType_t LED_ID)
+{
+	switch(LED_ID)
+	{
+	case RED_LED_ID:
+		GPIO_SetPinDir(LED_1_PORT_ID, LED_1_PIN_ID, pin_output);
+#if(RED_LED_CONFIG == NIGATIVE_LOGIC)
+		GPIO_WritePin(LED_1_PORT_ID, LED_1_PIN_ID, logic_high);
+#elif(RED_LED_CONFIG == POSITIVE_LOGIC)
+		GPIO_WritePin(LED_1_PORT_ID, LED_1_PIN_ID, logic_low);
+#endif
+		break;
+	}
+	return LED_OFF;
+}
+
+EN_LedState_t LED_TurnToggle(EN_LedType_t LED_ID)
+{
+	uint8 status;
+	uint8 ret;
+
+	switch(LED_ID)
+	{
+	case RED_LED_ID:
+		status = GPIO_ReadPin(LED_1_PORT_ID, LED_1_PIN_ID);
+#if(RED_LED_CONFIG == NIGATIVE_LOGIC)
+		if(status == LOGIC_LOW)
+		{
+			GPIO_WritePin(LED_1_PORT_ID, LED_1_PIN_ID, logic_high);
+			ret = LED_OFF;
+		}
+		else if(status == LOGIC_HIGH)
+		{
+			GPIO_WritePin(LED_1_PORT_ID, LED_1_PIN_ID, logic_low);
+			ret =  LED_ON;
+		}
+#elif(RED_LED_CONFIG == POSITIVE_LOGIC)
+		if(status == LOGIC_LOW)
+		{
+			GPIO_WritePin(LED_1_PORT_ID, LED_1_PIN_ID, logic_high);
+			ret = LED_ON;
+		}
+		else if(status == LOGIC_HIGH)
+		{
+			GPIO_WritePin(LED_1_PORT_ID, LED_1_PIN_ID, logic_low);
+			ret = LED_OFF;
+		}
+#endif
+		break;
+	}
+	return ret;
+}
